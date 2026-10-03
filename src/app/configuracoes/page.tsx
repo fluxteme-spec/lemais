@@ -7,18 +7,23 @@ import { useAppState } from "@/components/AppState";
 import { Toggle, WpmControl } from "@/components/Controls";
 import { aiAvailable } from "@/lib/client/actions";
 import type { Content } from "@/lib/types";
+import Link from "next/link";
+import { getConnection } from "@/lib/ai/connection";
+import { PROVIDERS, type AIConnection } from "@/lib/ai/providers";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { settings, updateSettings, reportStorageError } = useAppState();
   const [contents, setContents] = useState<Content[]>([]);
   const [ai, setAi] = useState<boolean | null>(null);
+  const [conn, setConn] = useState<AIConnection | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   const loadContents = () => repo().listContents().then(setContents).catch(reportStorageError);
   useEffect(() => {
     void loadContents();
     aiAvailable().then(setAi);
+    getConnection().then(setConn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -91,6 +96,18 @@ export default function SettingsPage() {
         />
       </section>
 
+      <section aria-labelledby="ia" className="mt-12">
+        <h2 id="ia" className="font-semibold">
+          IA para os questionários
+        </h2>
+        <p className="mt-2 max-w-prose">
+          {conn ? `Conectado a ${PROVIDERS[conn.provider].name}, modelo ${conn.model}.` : "Nenhuma IA conectada. Os textos da área Treinar funcionam sem IA."}
+        </p>
+        <Link href="/conectar-ia" className="btn mt-3">
+          {conn ? "Gerenciar conexão" : "Conectar minha IA"}
+        </Link>
+      </section>
+
       <section aria-labelledby="metricas" className="mt-12">
         <h2 id="metricas" className="font-semibold">
           Como as métricas funcionam
@@ -124,11 +141,8 @@ export default function SettingsPage() {
         </p>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Ao importar um link, o servidor do LêMais baixa a página só para extrair o texto e não a guarda.{" "}
-          {ai === null
-            ? ""
-            : ai
-              ? "A geração automática de perguntas está ativa: quando você pedir um teste para um texto colado ou importado, o texto é enviado ao provedor de IA configurado (Anthropic). O LêMais não guarda esse texto; o tempo de retenção no provedor segue a política de dados da API dele."
-              : "A geração automática de perguntas não está ativa nesta instalação; nenhum texto é enviado a provedores de IA."}
+          Quando você pede um questionário com a sua IA conectada, o texto vai direto do seu navegador para o provedor escolhido, e a chave fica só
+          neste navegador.{ai ? " Esta instalação também tem uma IA própria no servidor, usada apenas quando você não conecta a sua." : ""}
         </p>
 
         <h3 className="mt-6 font-medium">Textos salvos</h3>

@@ -8,6 +8,8 @@ Fluxo completo: **conteúdo → preparação → leitura → questionário opcio
 
 ## Como executar
 
+Para testar com dois cliques, veja `COMO-TESTAR.md`.
+
 Requisitos: Node.js 20 ou superior.
 
 ```bash
@@ -30,18 +32,18 @@ npm test          # testes automatizados (Vitest)
 npm run typecheck # verificação de tipos
 ```
 
-### Habilitar questionários por IA
+### IA para os questionários (conta do próprio usuário)
 
-Sem configuração, tudo funciona: a biblioteca de treino tem questionários revisados, e textos colados ou importados podem ser lidos normalmente, com o aviso de que o teste automático está indisponível.
+Cada usuário conecta a própria IA em **Configurações → Conectar minha IA** (`/conectar-ia`):
 
-Para gerar questionários de textos colados ou importados, defina no `.env.local`:
+- **Entrar com OpenRouter** (OAuth com PKCE): login na conta OpenRouter, que aceita entrar com Google, e acesso a modelos da OpenAI, Anthropic, Google e outros. O app recebe uma chave controlada pelo usuário, que pode ser revogada no OpenRouter.
+- **Chave de provedor:** Google Gemini, OpenAI, Anthropic ou OpenRouter.
 
-```
-ANTHROPIC_API_KEY=sua-chave
-ANTHROPIC_MODEL=claude-haiku-4-5-20251001   # opcional
-```
+A lista de modelos vem da conta do usuário e o app sugere um modelo rápido e econômico, sem nomes fixos no código. As chamadas saem **direto do navegador** para o provedor: a chave fica só no navegador (IndexedDB) e o texto não passa pelo servidor do LêMais. A política de segurança de conteúdo (CSP) só permite conexões com esses quatro provedores. Antes da primeira geração com cada provedor, o usuário é avisado de que o texto será enviado à conta dele.
 
-A chave só é usada no servidor (`/api/questions`). Antes da primeira geração, o usuário é avisado de que o texto será enviado ao provedor.
+Assinaturas de consumidor (ChatGPT Plus, Claude Pro, Gemini Advanced) não podem ser usadas por apps de terceiros, por isso o acesso é via API ou OpenRouter.
+
+Opcional: o dono da instalação pode definir `ANTHROPIC_API_KEY` no servidor, usado apenas quando o usuário não conectou nenhuma IA.
 
 ## O que está incluído
 
@@ -98,12 +100,14 @@ Limites e multiplicadores ficam em `src/lib/config/index.ts`.
 
 Executadas nesta entrega:
 
-- `npm test`: 90 testes passando (tokenização, blocos e durações, motor com relógio simulado, métricas, SSRF, download seguro contra servidor local, extração com fixtures, questionários, biblioteca e persistência com IndexedDB simulado).
+- `npm test`: 98 testes passando (tokenização, blocos e durações, provedores de IA no navegador e login OpenRouter com PKCE, motor com relógio simulado, métricas, SSRF, download seguro contra servidor local, extração com fixtures, questionários, biblioteca e persistência com IndexedDB simulado).
 - `npm run typecheck` e `npm run build`: sem erros.
 - Teste de ponta a ponta em Chromium headless contra o build de produção: primeiro acesso, colar texto, RSVP, aba oculta pausando sem avançar, recarregar e retomar pausado, troca de modo com posição preservada, sessão parcial, texto de treino até o fim, questionário, revisão, histórico, link para destino interno recusado, texto livre com ritmo estimado, larguras de 360, 768 e 1280 px, tema escuro e layout sem rolagem horizontal com zoom equivalente a 200%.
 - Importação real de um artigo público (Wikipédia) concluída com sucesso.
 
-Não executado: lint (não configurado), auditoria com leitor de tela real e teste com chave de IA real (a integração foi testada com provedor simulado).
+- Fluxo de IA do usuário no navegador com provedor simulado: convite para conectar, redirecionamento do login OpenRouter com PKCE, chave inválida recusada, sugestão de modelo, aviso de envio, questionário gerado e corrigido, sem bloqueios da CSP.
+
+Não executado: lint (não configurado), auditoria com leitor de tela real e chamadas reais a OpenRouter, Gemini, OpenAI e Anthropic (sem credenciais neste ambiente).
 
 ## Limitações conhecidas
 

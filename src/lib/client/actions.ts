@@ -6,6 +6,9 @@ import { getTrainingText, curatedQuestionSet } from "@/lib/training";
 import { hashBlocks } from "@/lib/text";
 import { TEXT_LIMITS } from "@/lib/config";
 import type { Content, QuestionSet, TextBlock } from "@/lib/types";
+import { getConnection } from "@/lib/ai/connection";
+import { browserProvider, PROVIDERS, type AIConnection } from "@/lib/ai/providers";
+import { generateQuestionSet, GenerationError } from "@/lib/comprehension/generate";
 
 export async function openTrainingText(id: string): Promise<Content> {
   const t = getTrainingText(id);
@@ -62,7 +65,7 @@ export async function extractFromUrl(url: string): Promise<{ ok: true; data: Ext
 
 export type QuizAvailability =
   | { kind: "ready"; set: QuestionSet }
-  | { kind: "can_generate" }
+  | { kind: "can_generate"; via: { kind: "user"; connection: AIConnection; providerName: string } | { kind: "server" } }
   | { kind: "too_short" }
   | { kind: "unavailable"; reason: string };
 
@@ -86,16 +89,33 @@ export async function quizAvailability(content: Content): Promise<QuizAvailabili
   const curated = curatedQuestionSet(content);
   if (curated) return { kind: "ready", set: curated };
   if (content.wordCount < TEXT_LIMITS.minWordsForQuiz) return { kind: "too_short" };
-  if (await aiAvailable()) return { kind: "can_generate" };
+  const conn = await getConnection();
+  if (conn) return { kind: "can_generate", via: { kind: "user", connection: conn, providerName: PROVIDERS[conn.provider].name } };
+  if (await aiAvailable()) return { kind: "can_generate", via: { kind: "server" } };
   return {
     kind: "unavailable",
-    reason: "O teste automático para textos colados ou importados não está disponível nesta instalação. Os textos da área Treinar têm questionários revisados.",
+    reason: "Para testar a compreensão de textos colados ou importados, conecte a sua IA (Google Gemini, ChatGPT, Claude e outras). Os textos da área Treinar já têm questionários revisados.",
   };
 }
 
 export async function generateQuestions(content: Content): Promise<{ ok: true; set: QuestionSet } | { ok: false; message: string }> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { ok: false, message: "Você está sem conexão. A geração de questões precisa de internet." };
+  }
+  const conn = await getConnection();
+  if (conn) {
+    // direto do navegador para o provedor do usuário; o servidor do LêMais não participa
+    try {
+      const set = await generateQuestionSet(
+        browserProvider(conn),
+        { contentId: content.id, contentVersion: content.version, title: content.title, blocks: content.textBlocks },
+        TEXT_LIMITS.minWordsForQuiz,
+      );
+      await repo().putQuestionSet(set);
+      return { ok: true, set };
+    } catch (e) {
+      return { ok: false, message: e instanceof GenerationError ? e.message : "Não foi possível gerar o questionário." };
+    }
   }
   try {
     const res = await fetch("/api/questions", {

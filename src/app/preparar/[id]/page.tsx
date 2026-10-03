@@ -266,9 +266,19 @@ export default function PreparePage() {
         <p className="mt-1 text-sm text-muted">
           {quiz === null && "Verificando questionário…"}
           {quiz?.kind === "ready" && (quiz.set.source === "curated" ? "Ao final, você pode responder um questionário revisado." : "Ao final, você pode responder o questionário já gerado para este texto.")}
-          {quiz?.kind === "can_generate" && "Ao final, você pode pedir um questionário gerado automaticamente."}
+          {quiz?.kind === "can_generate" &&
+            (quiz.via.kind === "user"
+              ? `Ao final, você pode pedir um questionário criado pela sua conta em ${quiz.via.providerName}.`
+              : "Ao final, você pode pedir um questionário gerado automaticamente.")}
           {quiz?.kind === "too_short" && `O texto tem menos de ${TEXT_LIMITS.minWordsForQuiz} palavras, curto demais para um questionário útil. A leitura funciona normalmente.`}
-          {quiz?.kind === "unavailable" && quiz.reason}
+          {quiz?.kind === "unavailable" && (
+            <>
+              {quiz.reason}{" "}
+              <Link href="/conectar-ia" className="underline underline-offset-4">
+                Conectar minha IA
+              </Link>
+            </>
+          )}
         </p>
         <button type="button" className="btn btn-primary mt-5 h-14 w-full text-lg sm:w-auto sm:px-10" onClick={start} disabled={starting || editing}>
           Começar leitura

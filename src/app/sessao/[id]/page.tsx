@@ -100,7 +100,8 @@ export default function SessionPage() {
     setMessage(null);
     if (availability.kind === "ready") return startQuiz(availability.set);
     if (availability.kind === "can_generate") {
-      const consented = await repo().getFlag("aiConsent").catch(() => false);
+      const consentKey = availability.via.kind === "user" ? availability.via.connection.provider : "server";
+      const consented = (await repo().getFlag("aiConsent").catch(() => null)) === consentKey;
       if (!consented) return setPhase("consent");
       return runGeneration();
     }
@@ -108,7 +109,11 @@ export default function SessionPage() {
 
   async function runGeneration() {
     if (!content) return;
-    await repo().setFlag("aiConsent", true).catch(() => {});
+    if (availability?.kind === "can_generate") {
+      await repo()
+        .setFlag("aiConsent", availability.via.kind === "user" ? availability.via.connection.provider : "server")
+        .catch(() => {});
+    }
     setPhase("generating");
     const r = await generateQuestions(content);
     if (r.ok) return startQuiz(r.set);
@@ -203,6 +208,11 @@ export default function SessionPage() {
                     : "O questionário não está disponível para este texto."}
               </p>
             )}
+            {availability?.kind === "unavailable" && (
+              <Link href={`/conectar-ia?voltar=${encodeURIComponent(`/sessao/${session.id}`)}`} className="btn mt-4">
+                Conectar minha IA
+              </Link>
+            )}
             {message && (
               <p role="alert" className="mt-3 border-l-4 border-danger pl-3">
                 {message} A leitura já está salva.
@@ -224,8 +234,9 @@ export default function SessionPage() {
           <>
             <h1 className="mt-2 font-serif text-3xl font-bold">Antes de gerar as perguntas</h1>
             <p className="mt-3 max-w-prose">
-              Para criar o questionário, o texto desta leitura será enviado ao provedor de IA configurado no servidor do LêMais. O texto não
-              fica guardado no servidor do LêMais. As regras de retenção do provedor estão descritas em Configurações.
+              {availability?.kind === "can_generate" && availability.via.kind === "user"
+                ? `Para criar o questionário, o texto desta leitura será enviado do seu navegador para a sua conta em ${availability.via.providerName}, usando o modelo ${availability.via.connection.model}. O uso é cobrado pelo provedor, conforme o seu plano lá.`
+                : "Para criar o questionário, o texto desta leitura será enviado ao provedor de IA configurado no servidor do LêMais. O texto não fica guardado no servidor do LêMais."}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button type="button" className="btn btn-primary" onClick={() => void runGeneration()}>
