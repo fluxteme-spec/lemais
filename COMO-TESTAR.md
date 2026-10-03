@@ -4,7 +4,10 @@
 2. Descompacte esta pasta.
 3. Dê dois cliques em:
    - **Windows:** `iniciar-windows.bat`
-   - **Mac:** `iniciar-mac-linux.command` (se o Mac bloquear, clique com o botão direito → Abrir)
+   - **Mac:** o macOS bloqueia scripts baixados da internet. Use o Terminal:
+     1. Abra o **Terminal** (Cmd + Espaço, digite "Terminal").
+     2. Digite `sh ` (com um espaço no final).
+     3. Arraste o arquivo `iniciar-mac-linux.command` para dentro da janela e aperte Enter.
 4. O navegador abre em http://localhost:3000. Na primeira vez a preparação leva alguns minutos.
 
 Para parar, feche a janela do terminal.
