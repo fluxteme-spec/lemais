@@ -8,6 +8,8 @@ import { Toggle, WpmControl } from "@/components/Controls";
 import { aiAvailable } from "@/lib/client/actions";
 import type { Content } from "@/lib/types";
 import Link from "next/link";
+import { useAccount } from "@/components/Account";
+import { InstallApp } from "@/components/Pwa";
 import { getConnection } from "@/lib/ai/connection";
 import { PROVIDERS, type AIConnection } from "@/lib/ai/providers";
 
@@ -18,6 +20,7 @@ export default function SettingsPage() {
   const [ai, setAi] = useState<boolean | null>(null);
   const [conn, setConn] = useState<AIConnection | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const acc = useAccount();
 
   const loadContents = () => repo().listContents().then(setContents).catch(reportStorageError);
   useEffect(() => {
@@ -35,6 +38,11 @@ export default function SettingsPage() {
   }
 
   async function clearAll() {
+    if (acc.user) {
+      if (!confirm("Apagar os dados deste aparelho e sair da conta? As leituras continuam salvas na sua conta.")) return;
+      await acc.signOut({ force: true });
+      return;
+    }
     if (!confirm("Apagar todos os dados do LêMais neste navegador? Textos, sessões, questionários e preferências serão removidos. Não é possível desfazer.")) return;
     try {
       await repo().clearAll();
@@ -96,6 +104,15 @@ export default function SettingsPage() {
         />
       </section>
 
+      <section aria-labelledby="instalar" className="mt-12">
+        <h2 id="instalar" className="font-semibold">
+          Instalar no celular ou computador
+        </h2>
+        <div className="mt-2">
+          <InstallApp />
+        </div>
+      </section>
+
       <section aria-labelledby="ia" className="mt-12">
         <h2 id="ia" className="font-semibold">
           IA para os questionários
@@ -137,7 +154,9 @@ export default function SettingsPage() {
           Seus dados
         </h2>
         <p className="mt-2 max-w-prose">
-          Tudo fica salvo apenas neste navegador, sem cadastro. Nada é sincronizado entre dispositivos; limpar os dados do navegador apaga o seu histórico.
+          {acc.user
+            ? "Suas leituras ficam neste aparelho e na sua conta, sincronizadas entre os aparelhos em que você entrar. Para apagar tudo da conta, use Excluir conta em Minha conta."
+            : "Sem conta, tudo fica salvo apenas neste navegador e nada é sincronizado entre aparelhos; limpar os dados do navegador apaga o seu histórico."}
         </p>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Ao importar um link, o servidor do LêMais baixa a página só para extrair o texto e não a guarda.{" "}
@@ -162,7 +181,7 @@ export default function SettingsPage() {
         )}
 
         <button type="button" className="btn btn-danger mt-6" onClick={() => void clearAll()}>
-          Apagar todos os dados locais
+          {acc.user ? "Apagar dados deste aparelho e sair" : "Apagar todos os dados locais"}
         </button>
       </section>
     </div>

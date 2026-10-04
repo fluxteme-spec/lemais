@@ -10,6 +10,8 @@ import { extractFromUrl, openTrainingText } from "@/lib/client/actions";
 import { TRAINING_TEXTS } from "@/lib/training";
 import { DIFFICULTY_LABEL } from "@/lib/session";
 import { useAppState } from "@/components/AppState";
+import { useAccount, useOnSynced } from "@/components/Account";
+import { AdSlot } from "@/components/AdSlot";
 import type { ReadingSession } from "@/lib/types";
 
 type Source = "texto" | "link" | "treino";
@@ -32,11 +34,15 @@ export default function HomePage() {
   const [resume, setResume] = useState<ReadingSession | null>(null);
   const [firstVisit, setFirstVisit] = useState(false);
 
-  useEffect(() => {
+  const acc = useAccount();
+  const loadResume = () =>
     repo()
       .listSessions()
       .then((list) => setResume(list.find(isRecoverable) ?? null))
       .catch(() => {});
+  useOnSynced(loadResume);
+  useEffect(() => {
+    void loadResume();
     repo()
       .getFlag("onboarded")
       .then((v) => setFirstVisit(!v))
@@ -120,7 +126,7 @@ export default function HomePage() {
           </h2>
           <p className="mt-2 max-w-prose text-muted">
             Aqui você experimenta modos de leitura, ajusta o ritmo e, se quiser, responde algumas perguntas para ver como foi a
-            compreensão. Sem cadastro: tudo fica salvo neste navegador.
+            compreensão. Não precisa de cadastro; com uma conta, suas leituras ficam salvas em todos os seus aparelhos.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
@@ -139,7 +145,7 @@ export default function HomePage() {
             </button>
           </div>
           <p className="mt-2 text-sm text-muted">
-            “Experimentar agora” abre um texto curto no modo texto livre: você marca o início e o fim e pode responder 4 perguntas.
+            “Experimentar agora” abre um texto curto no modo texto livre: você marca o início e o fim e pode responder 3 perguntas.
           </p>
         </section>
       )}
@@ -274,7 +280,13 @@ export default function HomePage() {
         <Link href="/progresso" className="inline-flex min-h-11 items-center text-muted underline underline-offset-4">
           Meu progresso
         </Link>
+        {acc.enabled && !acc.loading && !acc.user && (
+          <Link href="/entrar" className="inline-flex min-h-11 items-center text-muted underline underline-offset-4">
+            Entrar para salvar em todos os aparelhos
+          </Link>
+        )}
       </div>
+      <AdSlot placement="home" />
     </div>
   );
 }

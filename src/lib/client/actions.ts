@@ -7,6 +7,7 @@ import { hashBlocks } from "@/lib/text";
 import { TEXT_LIMITS } from "@/lib/config";
 import type { Content, QuestionSet, TextBlock } from "@/lib/types";
 import { getConnection } from "@/lib/ai/connection";
+import { supabase } from "@/lib/supabase/browser";
 import { browserProvider, PROVIDERS, type AIConnection } from "@/lib/ai/providers";
 import { generateQuestionSet, GenerationError } from "@/lib/comprehension/generate";
 
@@ -16,6 +17,45 @@ export async function openTrainingText(id: string): Promise<Content> {
   const existing = await repo().findContentByTraining(id);
   if (existing && existing.contentHash === hashBlocks(t.blocks)) return existing;
   const c = makeContent({ sourceType: "training", title: t.title, blocks: t.blocks, trainingId: t.id, difficulty: t.difficulty });
+  await repo().putContent(c);
+  return c;
+}
+
+export interface SuggestedText {
+  id: string;
+  title: string;
+  author: string | null;
+  source: string | null;
+  summary: string | null;
+  difficulty: Content["difficulty"];
+  blocks: TextBlock[];
+  questions: Content["curatedQuestions"];
+  updated_at: string;
+}
+
+export async function listSuggestedTexts(): Promise<SuggestedText[]> {
+  const sb = supabase();
+  if (!sb) return [];
+  const { data } = await sb.from("suggested_texts").select("id, title, author, source, summary, difficulty, blocks, questions, updated_at").order("created_at", { ascending: false }).limit(50);
+  return (data ?? []) as SuggestedText[];
+}
+
+export async function openSuggestedText(t: SuggestedText): Promise<Content> {
+  const key = `sug:${t.id}`;
+  const existing = await repo().findContentByTraining(key);
+  if (existing && existing.contentHash === hashBlocks(t.blocks)) return existing;
+  const c = makeContent({
+    sourceType: "suggested",
+    title: t.title,
+    blocks: t.blocks,
+    author: t.author,
+    siteName: t.source && !/^https?:/.test(t.source) ? t.source : null,
+    originalUrl: t.source && /^https?:/.test(t.source) ? t.source : null,
+    finalUrl: t.source && /^https?:/.test(t.source) ? t.source : null,
+    trainingId: key,
+    difficulty: t.difficulty,
+    curatedQuestions: t.questions ?? null,
+  });
   await repo().putContent(c);
   return c;
 }

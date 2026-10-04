@@ -65,7 +65,9 @@ export const AI = {
   /** Máximo de caracteres de texto enviados ao provedor (controle de custo). */
   maxInputChars: 40_000,
   maxAttempts: 2,
-  questionCount: 5,
+  /** Questionários têm no máximo 3 perguntas curtas. */
+  questionCount: 3,
+  minValidQuestions: 2,
 } as const;
 
 export const RATE_LIMIT = {

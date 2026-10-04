@@ -18,6 +18,8 @@ export function makeContent(input: {
   difficulty?: Difficulty;
   trainingId?: string | null;
   warnings?: string[];
+  curatedQuestions?: Content["curatedQuestions"];
+  adaptation?: Content["adaptation"];
 }): Content {
   return {
     id: newId(),
@@ -37,6 +39,8 @@ export function makeContent(input: {
     trainingId: input.trainingId ?? null,
     warnings: input.warnings ?? [],
     createdAt: new Date().toISOString(),
+    curatedQuestions: input.curatedQuestions ?? null,
+    adaptation: input.adaptation ?? null,
   };
 }
 
@@ -52,9 +56,10 @@ export function editContent(c: Content, title: string, blocks: TextBlock[]): Con
     contentHash: hash,
     version: changed ? c.version + 1 : c.version,
     // texto da biblioteca editado deixa de ter dificuldade editorial conhecida
-    difficulty: changed && c.sourceType === "training" ? "nao_classificada" : c.difficulty,
+    difficulty: changed && (c.sourceType === "training" || c.sourceType === "suggested") ? "nao_classificada" : c.difficulty,
     trainingId: changed ? null : c.trainingId,
-    sourceType: changed && c.sourceType === "training" ? "pasted" : c.sourceType,
+    curatedQuestions: changed ? null : (c.curatedQuestions ?? null),
+    sourceType: changed && (c.sourceType === "training" || c.sourceType === "suggested") ? "pasted" : c.sourceType,
   };
 }
 
@@ -87,6 +92,7 @@ export function newSession(content: Content, settings: ReadingSettings): Reading
     settingsSnapshot: { ...settings },
     metricsVersion: METRICS_VERSION,
     difficulty: content.difficulty,
+    adaptation: content.adaptation?.style ?? null,
   };
 }
 
@@ -144,4 +150,11 @@ export const DIFFICULTY_LABEL: Record<Content["difficulty"], string> = {
   intermediario: "Intermediário (aprox.)",
   avancado: "Avançado (aprox.)",
   nao_classificada: "Dificuldade não classificada",
+};
+
+export const ADAPT_LABEL: Record<NonNullable<Content["adaptation"]>["style"], string> = {
+  simples: "versão simplificada",
+  cientifico: "versão científica",
+  academico: "versão acadêmica",
+  classico: "versão clássica (séc. XIX)",
 };

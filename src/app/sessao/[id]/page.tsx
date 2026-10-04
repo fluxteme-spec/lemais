@@ -6,11 +6,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { newId, repo } from "@/lib/persistence";
 import { tokenize } from "@/lib/text";
 import { deriveMetrics, formatDuration, formatScore, primaryAttempt, scoreAttempt } from "@/lib/metrics";
-import { MODE_LABEL } from "@/lib/session";
+import { ADAPT_LABEL, MODE_LABEL } from "@/lib/session";
 import { generateQuestions, quizAvailability, type QuizAvailability } from "@/lib/client/actions";
 import { FullTextView } from "@/components/ReaderViews";
 import { Sheet } from "@/components/Sheet";
 import { useAppState } from "@/components/AppState";
+import { SharePanel } from "@/components/SharePanel";
+import { AdSlot } from "@/components/AdSlot";
 import type { Content, QuestionSet, QuizAttempt, ReadingSession } from "@/lib/types";
 
 type Phase = "loading" | "missing" | "reading" | "offer" | "consent" | "generating" | "quiz" | "result";
@@ -335,6 +337,7 @@ export default function SessionPage() {
     <div className="pt-8">
       <p className="text-muted">{partial ? "Sessão parcial" : "Resultado"}</p>
       <h1 className="mt-1 font-serif text-3xl font-bold sm:text-4xl">{session.contentTitle}</h1>
+      {session.adaptation && <p className="mt-1 text-sm text-muted">Leitura da {ADAPT_LABEL[session.adaptation]}. Fica fora das médias de comparação.</p>}
 
       <section aria-labelledby="compr" className="mt-6">
         <h2 id="compr" className="sr-only">
@@ -447,6 +450,7 @@ export default function SessionPage() {
         <Link href="/" className="btn btn-primary">
           Ler outro texto
         </Link>
+        <SharePanel session={session} content={content} attempt={primary} />
         <Link href="/progresso" className="btn">
           Meu progresso
         </Link>
@@ -461,6 +465,7 @@ export default function SessionPage() {
           </button>
         )}
       </div>
+      <AdSlot placement="resultado" />
     </div>
   );
 }

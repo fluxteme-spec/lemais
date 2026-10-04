@@ -45,7 +45,46 @@ Assinaturas de consumidor (ChatGPT Plus, Claude Pro, Gemini Advanced) não podem
 
 Opcional: o dono da instalação pode definir `ANTHROPIC_API_KEY` no servidor, usado apenas quando o usuário não conectou nenhuma IA.
 
-## O que está incluído
+## Fase 1 — app web instalável, contas e painel
+
+- **PWA:** instalável no celular e no computador (Configurações → Instalar). Um service worker guarda o app para abrir sem conexão. Texto já salvo no aparelho continua acessível; importação, login, IA e sincronização precisam de internet.
+- **Login com Google ou e-mail** (código de 6 números), via Supabase Auth. Login com Apple fica para quando houver conta Apple Developer. Ler continua funcionando sem conta.
+- **Cadastro:** nome, confirmação de 13 anos ou mais e aceite de Termos e Privacidade (`/termos`, `/privacidade`; revise com um advogado antes de divulgar).
+- **Sincronização:** textos, leituras, questionários e preferências vão para a conta e chegam aos outros aparelhos. Vale a alteração mais recente, e exclusões também sincronizam. A chave de IA nunca sai do aparelho. Ao sair da conta, os dados do aparelho são apagados (continuam na conta). Excluir a conta apaga tudo.
+- **Painel do desenvolvedor** (`/admin`, só para os e-mails em `ADMIN_EMAILS`):
+  - indicadores: usuários, novos, ativos, quem voltou, convites, leituras e propagandas;
+  - usuários: busca, suspensão (bloqueia o login) e exclusão;
+  - propagandas: local, período, prévia, exibições e cliques;
+  - textos sugeridos: até 3 perguntas validadas contra o texto, com sugestão pela IA do administrador.
+- **Propagandas:** marcadas como "Patrocinado". Aparecem só no Início, Treinar, Resultado e Progresso, nunca durante a leitura ou o questionário. Contagem anônima e limitada por IP.
+- **Adaptar o texto** com a IA do usuário: mais simples, científico, acadêmico ou clássico (séc. XIX).
+  - O original é preservado e a versão adaptada vira um novo texto marcado.
+  - Ela ganha perguntas próprias e fica fora das médias de comparação.
+  - Há proteção contra respostas que resumem ou inflam o texto.
+- **Questionário:** no máximo 3 perguntas curtas (ideia central, desenvolvimento e conclusão).
+- **Compartilhar** (com conta):
+  - cartão com a marca, o título, a fonte, um trecho opcional de até 200 caracteres e o desempenho, e uma página pública com prévia para redes sociais;
+  - WhatsApp por link e Facebook pela prévia da página;
+  - Instagram: imagem no formato Stories pela folha de compartilhamento do celular, ou download;
+  - quem entra pelo link fica registrado como convidado.
+
+Configuração passo a passo: `CONFIGURAR-SUPABASE.md`. Banco: `supabase/setup-completo.sql` (o mesmo de `supabase/migrations`). Todas as tabelas usam RLS. As gravações do painel passam por ações no servidor que verificam o e-mail do administrador antes de usar a chave secreta.
+
+### Verificações da Fase 1
+
+- `npm test`: 104 testes passando (inclui sincronização entre dois aparelhos simulados, exclusões e conflitos).
+- Build de produção e checagem de tipos sem erros.
+- Teste de ponta a ponta no navegador com Supabase local (Docker), sem erros no console:
+  - leitura sem conta, login por código e envio das leituras do aparelho para a conta;
+  - cartão, imagem Stories, página pública com prévia e link do WhatsApp;
+  - convite registrado; segundo aparelho recebendo as leituras;
+  - painel: indicadores, propaganda criada e exibida no resultado com contagem, texto sugerido com 3 perguntas lido e corrigido, suspensão de usuário;
+  - adaptação com IA simulada;
+  - `/admin` oculto para quem não é administrador;
+  - Treinar abrindo sem conexão.
+- Não testado: login real com Google (precisa das credenciais do Google Cloud), envio de e-mail real (testado com o servidor de e-mail local do Supabase) e IA real.
+
+## O que está incluído (base)
 
 - **Entrada:** texto colado, importação por link (extração no servidor com Readability) e 6 textos originais de treino (2 fáceis, 2 intermediários, 2 avançados), cada um com questionário revisado.
 - **Preparação:** título editável, fonte, autoria, data, link, prévia, edição do texto, contagem de palavras, modo, ritmo e tempo estimado.

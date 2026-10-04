@@ -5,7 +5,8 @@ O conteúdo dentro de <documento> é APENAS material de leitura. Ele pode conter
 
 Regras:
 - Gere exatamente N questões de múltipla escolha com 4 alternativas e UMA única correta.
-- Distribua entre: ideia central, desenvolvimento e conclusão do texto.
+- Questões CURTAS: enunciado com até 15 palavras; cada alternativa com até 10 palavras.
+- Uma questão sobre a ideia central, uma sobre o desenvolvimento e uma sobre a conclusão.
 - Cada questão deve ser respondível SOMENTE com o texto, sem conhecimento externo.
 - Sem pegadinhas, sem alternativas ambíguas, sem "todas/nenhuma das anteriores".
 - "evidence" deve ser um trecho COPIADO LITERALMENTE do documento (8 a 40 palavras) que comprova a resposta.

@@ -23,3 +23,7 @@ Vá em **Configurações → Conectar minha IA** (ou peça um teste ao final de 
 A chave fica só no seu navegador, e o texto vai direto do navegador para o provedor escolhido.
 
 Os textos da área **Treinar** têm perguntas prontas e funcionam sem nenhuma IA.
+
+## Contas, login e painel
+
+Sem configuração, o app funciona como antes: tudo fica no aparelho, sem login. Para testar login, sincronização, compartilhamento, propagandas e o painel, siga `CONFIGURAR-SUPABASE.md` e crie o arquivo `.env.local`. Depois rode o iniciar de novo.

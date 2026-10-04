@@ -29,7 +29,7 @@ export async function generateQuestionSet(
     try {
       const raw = await provider.generate({ title: input.title, text, count: AI.questionCount }, controller.signal);
       const report = validateQuestions(raw, tokens, `ai-${Date.now().toString(36)}`);
-      if (report.valid.length >= 3) {
+      if (report.valid.length >= AI.minValidQuestions) {
         return {
           id: `qs-${input.contentId}-${hashBlocks(input.blocks)}`,
           contentId: input.contentId,
@@ -37,7 +37,7 @@ export async function generateQuestionSet(
           contentHash: hashBlocks(input.blocks),
           source: "ai",
           providerMetadata: { provider: provider.name, model: provider.model },
-          questions: report.valid.slice(0, 5),
+          questions: report.valid.slice(0, AI.questionCount),
           createdAt: new Date().toISOString(),
         };
       }

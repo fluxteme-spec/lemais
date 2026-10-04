@@ -149,14 +149,18 @@ export function suggestModel(provider: AIProviderId, models: ModelOption[]): str
   return pool[0].id;
 }
 
-/** Provedor de questões que roda no navegador com a conexão do usuário. */
-export function browserProvider(conn: AIConnection, f: Fetch = fetch): QuestionProvider {
-  return {
-    name: conn.provider,
-    model: conn.model,
-    async generate({ title, text, count }, signal) {
-      const system = systemPrompt(count);
-      const user = userPrompt(title, text, count);
+/**
+ * Chamada genérica ao provedor do usuário, pedindo resposta em JSON.
+ * Retorna o texto bruto da resposta (o chamador interpreta o JSON).
+ */
+export async function completeJson(
+  conn: AIConnection,
+  system: string,
+  user: string,
+  signal: AbortSignal,
+  f: Fetch = fetch,
+  maxTokens: number = AI.maxOutputTokens,
+): Promise<string> {
       let out = "";
       if (conn.provider === "openrouter" || conn.provider === "openai") {
         const url = conn.provider === "openrouter" ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.openai.com/v1/chat/completions";
@@ -176,7 +180,7 @@ export function browserProvider(conn: AIConnection, f: Fetch = fetch): QuestionP
             ],
             response_format: { type: "json_object" },
             // modelos com raciocínio consomem tokens extras
-            ...(conn.provider === "openai" ? { max_completion_tokens: AI.maxOutputTokens * 3 } : { max_tokens: AI.maxOutputTokens * 3 }),
+            ...(conn.provider === "openai" ? { max_completion_tokens: maxTokens * 3 } : { max_tokens: maxTokens * 3 }),
           }),
         })) as { choices?: { message?: { content?: string | null; refusal?: string | null } }[] };
         const msg = data.choices?.[0]?.message;
@@ -190,7 +194,7 @@ export function browserProvider(conn: AIConnection, f: Fetch = fetch): QuestionP
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
             contents: [{ role: "user", parts: [{ text: user }] }],
-            generationConfig: { responseMimeType: "application/json", temperature: 0.3, maxOutputTokens: AI.maxOutputTokens * 3 },
+            generationConfig: { responseMimeType: "application/json", temperature: 0.3, maxOutputTokens: maxTokens * 3 },
           }),
         })) as { candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[] };
         const cand = data.candidates?.[0];
@@ -206,11 +210,21 @@ export function browserProvider(conn: AIConnection, f: Fetch = fetch): QuestionP
             "anthropic-version": "2023-06-01",
             "anthropic-dangerous-direct-browser-access": "true",
           },
-          body: JSON.stringify({ model: conn.model, max_tokens: AI.maxOutputTokens, system, messages: [{ role: "user", content: user }] }),
+          body: JSON.stringify({ model: conn.model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
         })) as { content?: { type: string; text?: string }[]; stop_reason?: string };
         if (data.stop_reason === "refusal") throw new ProviderError("refused", "O modelo recusou gerar questões para este texto.");
         out = data.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("") ?? "";
       }
+      return out;
+}
+
+/** Provedor de questões que roda no navegador com a conexão do usuário. */
+export function browserProvider(conn: AIConnection, f: Fetch = fetch): QuestionProvider {
+  return {
+    name: conn.provider,
+    model: conn.model,
+    async generate({ title, text, count }, signal) {
+      const out = await completeJson(conn, systemPrompt(count), userPrompt(title, text, count), signal, f);
       try {
         return parseJsonObject(out);
       } catch {

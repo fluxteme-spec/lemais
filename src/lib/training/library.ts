@@ -473,3 +473,13 @@ export const TRAINING_TEXTS: TrainingText[] = [
 export function getTrainingText(id: string): TrainingText | undefined {
   return TRAINING_TEXTS.find((t) => t.id === id);
 }
+
+/** Seleciona até 3 perguntas: ideia central, desenvolvimento e conclusão. */
+export function pickThree<T extends { focus?: string }>(qs: T[]): T[] {
+  const central = qs.find((q) => q.focus === "ideia_central");
+  const concl = [...qs].reverse().find((q) => q.focus === "conclusao");
+  const dev = qs.find((q) => q.focus === "desenvolvimento");
+  const picked = [central, dev, concl].filter((q): q is T => !!q);
+  for (const q of qs) if (picked.length < 3 && !picked.includes(q)) picked.push(q);
+  return picked.slice(0, 3);
+}

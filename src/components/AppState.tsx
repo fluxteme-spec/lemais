@@ -35,14 +35,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    repo()
-      .getSettings()
-      .then((s) => {
-        setSettings(s);
-        applyTheme(s.theme);
-      })
-      .catch(reportStorageError)
-      .finally(() => setReady(true));
+    const load = () =>
+      repo()
+        .getSettings()
+        .then((s) => {
+          setSettings(s);
+          applyTheme(s.theme);
+        })
+        .catch(reportStorageError)
+        .finally(() => setReady(true));
+    void load();
+    // preferências podem chegar de outro aparelho pela sincronização
+    window.addEventListener("lemais:synced", load);
+    return () => window.removeEventListener("lemais:synced", load);
   }, [reportStorageError]);
 
   const updateSettings = useCallback(

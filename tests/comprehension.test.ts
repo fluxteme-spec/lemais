@@ -18,10 +18,24 @@ describe("biblioteca de treino", () => {
     const report = validateQuestions({ questions: t.questions }, tokenize(t.blocks), "x");
     expect(report.rejected).toEqual([]);
     expect(report.valid.length).toBeGreaterThanOrEqual(3);
-    expect(report.valid.length).toBeLessThanOrEqual(5);
     expect(new Set(t.questions.map((q) => q.correctOption)).size).toBeGreaterThan(1);
     expect(t.questions.some((q) => q.focus === "ideia_central")).toBe(true);
     expect(t.questions.some((q) => q.focus === "conclusao")).toBe(true);
+  });
+
+  it("o questionário revisado tem no máximo 3 perguntas, cobrindo ideia central e conclusão", () => {
+    for (const t of TRAINING_TEXTS) {
+      const c = makeContent({ sourceType: "training", title: t.title, blocks: t.blocks, trainingId: t.id });
+      const set = curatedQuestionSet(c)!;
+      expect(set.questions).toHaveLength(3);
+      expect(set.questions.map((q) => q.focus)).toEqual(["ideia_central", "desenvolvimento", "conclusao"]);
+    }
+  });
+
+  it("textos sugeridos usam as próprias perguntas", () => {
+    const t = TRAINING_TEXTS[1];
+    const c = makeContent({ sourceType: "suggested", title: "Sugestão", blocks: t.blocks, curatedQuestions: t.questions.slice(0, 2) });
+    expect(curatedQuestionSet(c)!.questions).toHaveLength(2);
   });
 
   it("editar o texto invalida o questionário revisado", () => {
@@ -72,7 +86,7 @@ describe("geração com provedor", () => {
   it("aceita saída válida e associa ao hash do conteúdo", async () => {
     const set = await generateQuestionSet(fake(async () => ({ questions: TRAINING_TEXTS[2].questions })), input, 120);
     expect(set.source).toBe("ai");
-    expect(set.questions.length).toBe(5);
+    expect(set.questions.length).toBe(3);
     expect(set.providerMetadata).toEqual({ provider: "fake", model: "m" });
   });
 

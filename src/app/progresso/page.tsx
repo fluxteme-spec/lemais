@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { repo } from "@/lib/persistence";
 import { deriveMetrics, formatDuration, formatScore, primaryAttempt } from "@/lib/metrics";
-import { DIFFICULTY_LABEL, MODE_LABEL } from "@/lib/session";
+import { ADAPT_LABEL, DIFFICULTY_LABEL, MODE_LABEL } from "@/lib/session";
 import { useAppState } from "@/components/AppState";
+import { useOnSynced } from "@/components/Account";
+import { AdSlot } from "@/components/AdSlot";
 import type { QuizAttempt, ReadingMode, ReadingSession } from "@/lib/types";
 
 const STATUS_LABEL: Record<ReadingSession["status"], string> = {
@@ -40,6 +42,7 @@ export default function ProgressPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useOnSynced(() => void load());
 
   const bySession = useMemo(() => {
     const m = new Map<string, QuizAttempt[]>();
@@ -48,12 +51,15 @@ export default function ProgressPage() {
   }, [attempts]);
 
   const stats = useMemo(() => {
-    const list = sessions ?? [];
-    const ended = list.filter((s) => s.finishedAt);
+    const all = sessions ?? [];
+    // versões adaptadas não entram nas comparações de ritmo e compreensão
+    const list = all.filter((s) => !s.adaptation);
+    const adaptedCount = all.length - list.length;
+    const ended = all.filter((s) => s.finishedAt);
     const complete = ended.filter((s) => s.status !== "parcial").length;
     const partial = ended.filter((s) => s.status === "parcial").length;
-    const activeMs = list.reduce((n, s) => n + s.activeDurationMs, 0);
-    const presented = list.reduce((n, s) => n + s.presentedWordCount, 0);
+    const activeMs = all.reduce((n, s) => n + s.activeDurationMs, 0);
+    const presented = all.reduce((n, s) => n + s.presentedWordCount, 0);
     // ritmo observado por modo: somente sessões de um único modo e com dados suficientes
     const perMode = MODES.map((mode) => {
       const eligible = list.filter((s) => s.modesUsed.length === 1 && s.modesUsed[0] === mode).filter((s) => !deriveMetrics({ ...s }).insufficient);
@@ -66,7 +72,7 @@ export default function ProgressPage() {
     const avg = (xs: QuizAttempt[]) => (xs.length ? Math.round((xs.reduce((n, a) => n + (a.score ?? 0), 0) / xs.length) * 100) : null);
     const closed = primaries.filter((a) => !a.consultedText);
     const open = primaries.filter((a) => a.consultedText);
-    return { complete, partial, activeMs, presented, perMode, evaluated: primaries.length, avgClosed: avg(closed), nClosed: closed.length, avgOpen: avg(open), nOpen: open.length };
+    return { adaptedCount, comparable: list.length, complete, partial, activeMs, presented, perMode, evaluated: primaries.length, avgClosed: avg(closed), nClosed: closed.length, avgOpen: avg(open), nOpen: open.length };
   }, [sessions, bySession]);
 
   async function remove(s: ReadingSession) {
@@ -170,12 +176,20 @@ export default function ProgressPage() {
               <span className="text-muted">({stats.nOpen} {stats.nOpen === 1 ? "sessão" : "sessões"})</span>
             </li>
             <li className="text-sm text-muted">
-              {stats.evaluated} de {sessions.length} sessões com questionário. Só a primeira tentativa de cada sessão é considerada; com poucos testes, a
+              {stats.evaluated} de {stats.comparable} sessões com questionário. Só a primeira tentativa de cada sessão é considerada; com poucos testes, a
               média é apenas indicativa.
             </li>
           </ul>
         )}
       </section>
+
+      {stats.adaptedCount > 0 && (
+        <p className="mt-4 max-w-prose text-sm text-muted">
+          {stats.adaptedCount} {stats.adaptedCount === 1 ? "leitura de versão adaptada fica" : "leituras de versões adaptadas ficam"} fora das médias de ritmo e compreensão, para não misturar textos diferentes.
+        </p>
+      )}
+
+      <AdSlot placement="progresso" />
 
       <section aria-labelledby="historico" className="mt-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -205,6 +219,7 @@ export default function ProgressPage() {
                   <Link href={reading ? `/ler/${s.id}` : `/sessao/${s.id}`} className="font-serif text-lg font-bold underline-offset-4 hover:underline">
                     {s.contentTitle}
                   </Link>
+                  {s.adaptation && <span className="ml-2 text-sm text-muted">({ADAPT_LABEL[s.adaptation]})</span>}
                   <p className="text-sm text-muted">
                     {new Date(s.startedAt).toLocaleDateString("pt-BR", { dateStyle: "medium" })} — {STATUS_LABEL[s.status]} — {s.modesUsed.map((x) => MODE_LABEL[x]).join(", ")}
                   </p>

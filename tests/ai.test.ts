@@ -24,7 +24,7 @@ describe("IA do usuário no navegador", () => {
     for (const p of ["openrouter", "openai"] as const) {
       const { f, calls } = mockFetch(() => ({ body: { choices: [{ message: { content: "```json\n" + quizJson + "\n```" } }] } }));
       const set = await generateQuestionSet(browserProvider(conn(p, "m"), f), input, 120);
-      expect(set.questions).toHaveLength(5);
+      expect(set.questions).toHaveLength(3);
       expect(calls[0].url).toMatch(p === "openrouter" ? /^https:\/\/openrouter\.ai\// : /^https:\/\/api\.openai\.com\//);
       const body = JSON.parse(String(calls[0].init.body));
       expect(body.messages[0].role).toBe("system");

@@ -7,7 +7,7 @@ export interface TextBlock {
   text: string;
 }
 
-export type SourceType = "pasted" | "url" | "training";
+export type SourceType = "pasted" | "url" | "training" | "suggested";
 export type Difficulty = "facil" | "intermediario" | "avancado" | "nao_classificada";
 
 export interface Content {
@@ -30,6 +30,29 @@ export interface Content {
   /** Avisos da extração (ex.: possivelmente incompleta). */
   warnings: string[];
   createdAt: string;
+  /** Perguntas revisadas que acompanham textos sugeridos pelo painel. */
+  curatedQuestions?: CuratedQuestion[] | null;
+  /** Presente quando o texto é uma versão adaptada por IA de outro conteúdo. */
+  adaptation?: Adaptation | null;
+}
+
+export type AdaptStyle = "simples" | "cientifico" | "academico" | "classico";
+
+export interface Adaptation {
+  fromId: string;
+  fromTitle: string;
+  style: AdaptStyle;
+  provider: string;
+  model: string;
+}
+
+export interface CuratedQuestion {
+  prompt: string;
+  options: string[];
+  correctOption: number;
+  explanation: string;
+  evidence: string;
+  focus?: "ideia_central" | "desenvolvimento" | "conclusao";
 }
 
 export type ReadingMode = "rsvp" | "chunk" | "guided" | "free";
@@ -84,6 +107,8 @@ export interface ReadingSession {
   settingsSnapshot: ReadingSettings;
   metricsVersion: number;
   difficulty: Difficulty;
+  /** Estilo da versão adaptada lida, ou null para o texto original. */
+  adaptation?: AdaptStyle | null;
 }
 
 export interface Question {

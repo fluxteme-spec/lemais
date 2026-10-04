@@ -8,8 +8,8 @@ import { locateEvidence, normalizeForMatch, type Token } from "@/lib/text";
 import type { Question } from "@/lib/types";
 
 export const RawQuestionSchema = z.object({
-  prompt: z.string().min(10).max(400),
-  options: z.array(z.string().min(1).max(250)).length(4),
+  prompt: z.string().min(8).max(200),
+  options: z.array(z.string().min(1).max(160)).length(4),
   correctOption: z.number().int().min(0).max(3),
   explanation: z.string().min(10).max(600),
   evidence: z.string().min(15).max(600),

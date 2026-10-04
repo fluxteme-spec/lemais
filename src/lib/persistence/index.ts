@@ -34,6 +34,47 @@ export interface Repository {
   setFlag(key: string, value: unknown): Promise<void>;
 
   clearAll(): Promise<void>;
+
+  // ---- sincronização ----
+  listDirty(): Promise<DirtyEntry[]>;
+  clearDirty(entry: DirtyEntry): Promise<void>;
+  getRaw(kind: SyncKind, id: string): Promise<unknown>;
+  /** Aplica um registro vindo da nuvem sem marcá-lo como alterado. Ignora se houver alteração local pendente. */
+  applyRemote(kind: SyncKind, id: string, data: unknown | null): Promise<boolean>;
+  /** Marca todos os registros locais para envio (primeiro login neste navegador). */
+  markAllDirty(): Promise<number>;
+}
+
+export type SyncKind = "content" | "session" | "questionSet" | "attempt" | "settings";
+export interface DirtyEntry {
+  kind: SyncKind;
+  id: string;
+  at: string;
+  deleted: boolean;
+}
+
+const KIND_STORE: Record<Exclude<SyncKind, "settings">, StoreName> = {
+  content: "contents",
+  session: "sessions",
+  questionSet: "questionSets",
+  attempt: "attempts",
+};
+const dirtyKey = (kind: SyncKind, id: string) => `dirty|${kind}|${id}`;
+
+/** Ouvintes de alteração local (usados para disparar a sincronização). */
+const changeListeners = new Set<() => void>();
+export function onLocalChange(fn: () => void): () => void {
+  changeListeners.add(fn);
+  return () => changeListeners.delete(fn);
+}
+function emitChange() {
+  changeListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch {
+      /* ignora */
+    }
+  });
 }
 
 export const DEFAULT_SETTINGS: ReadingSettings = {
@@ -135,6 +176,18 @@ export class IndexedDbRepository implements Repository {
   private put(store: StoreName, value: unknown, key?: IDBValidKey) {
     return this.run(store, "readwrite", (tx) => req(tx.objectStore(store).put(value, key)).then(() => undefined));
   }
+  /** Grava e marca para sincronização na mesma transação. */
+  private putTracked(store: StoreName, kind: SyncKind, id: string, value: unknown, key?: IDBValidKey) {
+    return this.run([store, "kv"], "readwrite", (tx) => {
+      tx.objectStore(store).put(value, key);
+      const entry: DirtyEntry = { kind, id, at: new Date().toISOString(), deleted: false };
+      tx.objectStore("kv").put(entry, dirtyKey(kind, id));
+    }).then(emitChange);
+  }
+  private markDeleted(tx: IDBTransaction, kind: SyncKind, id: string) {
+    const entry: DirtyEntry = { kind, id, at: new Date().toISOString(), deleted: true };
+    tx.objectStore("kv").put(entry, dirtyKey(kind, id));
+  }
   private get<T>(store: StoreName, key: IDBValidKey) {
     return this.run(store, "readonly", (tx) => req(tx.objectStore(store).get(key)).then((v) => (v ?? null) as T | null));
   }
@@ -146,7 +199,7 @@ export class IndexedDbRepository implements Repository {
   }
 
   putContent(c: Content) {
-    return this.put("contents", c);
+    return this.putTracked("contents", "content", c.id, c);
   }
   getContent(id: string) {
     return this.get<Content>("contents", id);
@@ -160,21 +213,29 @@ export class IndexedDbRepository implements Repository {
   }
   /** Exclui o conteúdo e tudo que depende dele (sessões, questionários, tentativas). */
   deleteContent(id: string) {
-    return this.run(["contents", "sessions", "questionSets", "attempts"], "readwrite", async (tx) => {
+    return this.run(["contents", "sessions", "questionSets", "attempts", "kv"], "readwrite", async (tx) => {
       const sessions = (await req(tx.objectStore("sessions").index("contentId").getAll(id))) as ReadingSession[];
       for (const s of sessions) {
         const atts = (await req(tx.objectStore("attempts").index("sessionId").getAll(s.id))) as QuizAttempt[];
-        for (const a of atts) tx.objectStore("attempts").delete(a.id);
+        for (const a of atts) {
+          tx.objectStore("attempts").delete(a.id);
+          this.markDeleted(tx, "attempt", a.id);
+        }
         tx.objectStore("sessions").delete(s.id);
+        this.markDeleted(tx, "session", s.id);
       }
       const sets = (await req(tx.objectStore("questionSets").index("contentId").getAll(id))) as QuestionSet[];
-      for (const q of sets) tx.objectStore("questionSets").delete(q.id);
+      for (const q of sets) {
+        tx.objectStore("questionSets").delete(q.id);
+        this.markDeleted(tx, "questionSet", q.id);
+      }
       tx.objectStore("contents").delete(id);
-    });
+      this.markDeleted(tx, "content", id);
+    }).then(emitChange);
   }
 
   putSession(s: ReadingSession) {
-    return this.put("sessions", s);
+    return this.putTracked("sessions", "session", s.id, s);
   }
   getSession(id: string) {
     return this.get<ReadingSession>("sessions", id);
@@ -183,15 +244,19 @@ export class IndexedDbRepository implements Repository {
     return (await this.all<ReadingSession>("sessions")).sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   }
   deleteSession(id: string) {
-    return this.run(["sessions", "attempts"], "readwrite", async (tx) => {
+    return this.run(["sessions", "attempts", "kv"], "readwrite", async (tx) => {
       const atts = (await req(tx.objectStore("attempts").index("sessionId").getAll(id))) as QuizAttempt[];
-      for (const a of atts) tx.objectStore("attempts").delete(a.id);
+      for (const a of atts) {
+        tx.objectStore("attempts").delete(a.id);
+        this.markDeleted(tx, "attempt", a.id);
+      }
       tx.objectStore("sessions").delete(id);
-    });
+      this.markDeleted(tx, "session", id);
+    }).then(emitChange);
   }
 
   putQuestionSet(q: QuestionSet) {
-    return this.put("questionSets", q);
+    return this.putTracked("questionSets", "questionSet", q.id, q);
   }
   getQuestionSet(id: string) {
     return this.get<QuestionSet>("questionSets", id);
@@ -203,7 +268,7 @@ export class IndexedDbRepository implements Repository {
   }
 
   putAttempt(a: QuizAttempt) {
-    return this.put("attempts", a);
+    return this.putTracked("attempts", "attempt", a.id, a);
   }
   listAttempts(sessionId?: string) {
     return sessionId ? this.byIndex<QuizAttempt>("attempts", "sessionId", sessionId) : this.all<QuizAttempt>("attempts");
@@ -214,7 +279,7 @@ export class IndexedDbRepository implements Repository {
     return { ...DEFAULT_SETTINGS, ...(s ?? {}) };
   }
   putSettings(s: ReadingSettings) {
-    return this.put("kv", s, "settings");
+    return this.putTracked("kv", "settings", "settings", s, "settings");
   }
   getFlag(key: string) {
     return this.get<unknown>("kv", `flag:${key}`);
@@ -226,6 +291,58 @@ export class IndexedDbRepository implements Repository {
   clearAll() {
     return this.run([...STORES], "readwrite", (tx) => {
       for (const s of STORES) tx.objectStore(s).clear();
+    });
+  }
+
+  async listDirty() {
+    return this.run("kv", "readonly", (tx) =>
+      req(tx.objectStore("kv").getAll(IDBKeyRange.bound("dirty|", "dirty|\uffff"))) as Promise<DirtyEntry[]>,
+    );
+  }
+
+  clearDirty(entry: DirtyEntry) {
+    return this.run("kv", "readwrite", async (tx) => {
+      const store = tx.objectStore("kv");
+      const cur = (await req(store.get(dirtyKey(entry.kind, entry.id)))) as DirtyEntry | undefined;
+      // só limpa se nada mudou desde o envio
+      if (cur && cur.at === entry.at && cur.deleted === entry.deleted) store.delete(dirtyKey(entry.kind, entry.id));
+    });
+  }
+
+  getRaw(kind: SyncKind, id: string) {
+    if (kind === "settings") return this.get<unknown>("kv", "settings");
+    return this.get<unknown>(KIND_STORE[kind], id);
+  }
+
+  applyRemote(kind: SyncKind, id: string, data: unknown | null) {
+    const store: StoreName = kind === "settings" ? "kv" : KIND_STORE[kind];
+    return this.run(Array.from(new Set<StoreName>([store, "kv"])), "readwrite", async (tx) => {
+      const pending = await req(tx.objectStore("kv").get(dirtyKey(kind, id)));
+      if (pending) return false;
+      const key = kind === "settings" ? "settings" : id;
+      if (data === null) tx.objectStore(store).delete(key);
+      else if (kind === "settings") tx.objectStore(store).put(data, "settings");
+      else tx.objectStore(store).put(data);
+      return true;
+    });
+  }
+
+  markAllDirty() {
+    return this.run([...STORES], "readwrite", async (tx) => {
+      const at = new Date().toISOString();
+      let n = 0;
+      for (const [kind, store] of Object.entries(KIND_STORE) as [SyncKind, StoreName][]) {
+        const keys = (await req(tx.objectStore(store).getAllKeys())) as string[];
+        for (const id of keys) {
+          tx.objectStore("kv").put({ kind, id, at, deleted: false } satisfies DirtyEntry, dirtyKey(kind, id));
+          n++;
+        }
+      }
+      if (await req(tx.objectStore("kv").get("settings"))) {
+        tx.objectStore("kv").put({ kind: "settings", id: "settings", at, deleted: false } satisfies DirtyEntry, dirtyKey("settings", "settings"));
+        n++;
+      }
+      return n;
     });
   }
 }

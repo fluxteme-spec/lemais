@@ -2,8 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppStateProvider, StorageBanner } from "@/components/AppState";
 import { Nav } from "@/components/Nav";
+import { AccountProvider } from "@/components/Account";
+import { AccountBanner } from "@/components/AccountBanner";
+import { PwaRegister } from "@/components/Pwa";
+import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: "LêMais", template: "%s · LêMais" },
   description: "Leitura guiada, experimentação de ritmo e teste opcional de compreensão.",
   applicationName: "LêMais",
@@ -34,11 +39,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Pular para o conteúdo
         </a>
         <AppStateProvider>
-          <StorageBanner />
-          <Nav />
-          <main id="conteudo" className="mx-auto w-full max-w-3xl px-4 pb-28 sm:pb-16">
-            {children}
-          </main>
+          <AccountProvider>
+            <StorageBanner />
+            <AccountBanner />
+            <Nav />
+            <main id="conteudo" className="mx-auto w-full max-w-3xl px-4 pb-12">
+              {children}
+            </main>
+            <Footer />
+            <PwaRegister />
+          </AccountProvider>
         </AppStateProvider>
       </body>
     </html>

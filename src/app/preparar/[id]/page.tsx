@@ -11,6 +11,7 @@ import { quizAvailability, type QuizAvailability } from "@/lib/client/actions";
 import { useAppState } from "@/components/AppState";
 import { ChunkSizeSelector, ModeSelector, Toggle, WpmControl, formatEstimate } from "@/components/Controls";
 import { TEXT_LIMITS } from "@/lib/config";
+import { AdaptPanel } from "@/components/AdaptPanel";
 import type { Content, ReadingSettings } from "@/lib/types";
 
 export default function PreparePage() {
@@ -121,12 +122,13 @@ export default function PreparePage() {
       <label htmlFor="titulo" className="sr-only">
         Título
       </label>
-      <input
+      <textarea
         id="titulo"
+        rows={1}
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => setTitle(e.target.value.replace(/\n/g, " "))}
         maxLength={300}
-        className="w-full rounded-lg border-[1.5px] border-transparent bg-transparent py-1 font-serif text-3xl font-bold leading-tight hover:border-line focus:border-focus sm:text-4xl"
+        className="w-full resize-none rounded-lg border-[1.5px] border-transparent bg-transparent py-1 font-serif text-3xl font-bold leading-tight [field-sizing:content] hover:border-line focus:border-focus sm:text-4xl"
       />
       {content.subtitle && <p className="mt-1 font-serif text-lg text-muted">{content.subtitle}</p>}
 
@@ -233,6 +235,8 @@ export default function PreparePage() {
           </div>
         )}
       </section>
+
+      {!editing && <AdaptPanel key={content.id} content={content} />}
 
       <section aria-label="Configuração da leitura" className="mt-8 space-y-6">
         <ModeSelector value={settings.mode} onChange={(mode) => set({ mode })} />
