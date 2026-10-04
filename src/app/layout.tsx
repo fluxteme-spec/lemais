@@ -6,6 +6,7 @@ import { AccountProvider } from "@/components/Account";
 import { AccountBanner } from "@/components/AccountBanner";
 import { PwaRegister } from "@/components/Pwa";
 import { Footer } from "@/components/Footer";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <PwaRegister />
           </AccountProvider>
         </AppStateProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
