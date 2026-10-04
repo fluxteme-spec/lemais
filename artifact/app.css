@@ -1,0 +1,176 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@source "./";
+
+/*
+ * LêMais — identidade: papel sálvia claro, tinta azul-ardósia e um único
+ * marca-texto amarelo, usado só onde a leitura acontece (palavra/bloco ativo).
+ */
+:root {
+  --paper: #eef1ec;
+  --surface: #f8faf6;
+  --ink: #1c2b33;
+  --muted: #56666c;
+  --line: #cfd8d2;
+  --marker: #f3d75a;
+  --marker-ink: #1c2b33;
+  --focus: #2b6aa0;
+  --danger: #a3332b;
+  --ok: #2f6b45;
+  color-scheme: light;
+}
+
+html, body { background: var(--paper); }
+
+:root[data-theme="escuro"],
+:root[data-theme="dark"] {
+  --paper: #131a1e;
+  --surface: #1b242a;
+  --ink: #e3e9e5;
+  --muted: #9aa8aa;
+  --line: #2f3c42;
+  --marker: #d9bd45;
+  --marker-ink: #131a1e;
+  --focus: #7db4e6;
+  --danger: #f08a80;
+  --ok: #8ccf9f;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]):not([data-theme="light"]) {
+    --paper: #131a1e;
+    --surface: #1b242a;
+    --ink: #e3e9e5;
+    --muted: #9aa8aa;
+    --line: #2f3c42;
+    --marker: #d9bd45;
+    --marker-ink: #131a1e;
+    --focus: #7db4e6;
+    --danger: #f08a80;
+    --ok: #8ccf9f;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-marker: var(--marker);
+  --color-marker-ink: var(--marker-ink);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-serif: "Charter", "Bitstream Charter", "Sitka Text", "Iowan Old Style", Cambria, Georgia, serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer components {
+/* Controles: alvo mínimo 44×44 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn-quiet {
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.field {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+}
+.field:focus-visible {
+  border-color: var(--focus);
+}
+
+/* O marca-texto: a única cor forte do produto */
+.marker {
+  background: linear-gradient(transparent 12%, var(--marker) 12%, var(--marker) 88%, transparent 88%);
+  color: var(--marker-ink);
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+}
+
+.reading-text {
+  font-family: var(--font-serif);
+}
+
+input[type="range"] {
+  accent-color: var(--ink);
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

@@ -16,8 +16,10 @@ const Ctx = createContext<AppState | null>(null);
 
 export function applyTheme(theme: ReadingSettings["theme"]) {
   const root = document.documentElement;
-  if (theme === "sistema") root.removeAttribute("data-theme");
-  else root.setAttribute("data-theme", theme);
+  if (theme === "sistema") {
+    // só remove a escolha feita pelo próprio app (preserva a do ambiente que exibe a página)
+    if (["claro", "escuro"].includes(root.getAttribute("data-theme") ?? "")) root.removeAttribute("data-theme");
+  } else root.setAttribute("data-theme", theme);
   try {
     localStorage.setItem("lemais-theme", theme);
   } catch {

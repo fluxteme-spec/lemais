@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { useAccount } from "./Account";
+import { useAccount } from "@/components/Account";
 import { Sheet } from "./Sheet";
 import { deriveMetrics } from "@/lib/metrics";
 import { ADAPT_LABEL, MODE_LABEL } from "@/lib/session";

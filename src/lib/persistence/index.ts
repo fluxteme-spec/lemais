@@ -348,6 +348,10 @@ export class IndexedDbRepository implements Repository {
 }
 
 let singleton: Repository | null = null;
+/** Permite trocar o armazenamento (ex.: memória, quando o navegador bloqueia o IndexedDB). */
+export function setRepo(r: Repository) {
+  singleton = r;
+}
 export function repo(): Repository {
   if (!singleton) singleton = new IndexedDbRepository();
   return singleton;

@@ -86,6 +86,9 @@ const EXTRACT_MESSAGES: Record<string, string> = {
 };
 
 export async function extractFromUrl(url: string): Promise<{ ok: true; data: ExtractSuccess } | { ok: false; message: string }> {
+  if (process.env.NEXT_PUBLIC_LEMAIS_PAGINA_UNICA) {
+    return { ok: false, message: "Nesta versão de teste, a importação por link não está disponível." };
+  }
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { ok: false, message: "Você está sem conexão. A importação por link precisa de internet." };
   }

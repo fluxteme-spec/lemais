@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount } from "./Account";
+import { useAccount } from "@/components/Account";
 
 const ITEMS = [
   { href: "/", label: "Ler" },

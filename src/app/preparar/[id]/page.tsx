@@ -12,6 +12,7 @@ import { useAppState } from "@/components/AppState";
 import { ChunkSizeSelector, ModeSelector, Toggle, WpmControl, formatEstimate } from "@/components/Controls";
 import { TEXT_LIMITS } from "@/lib/config";
 import { AdaptPanel } from "@/components/AdaptPanel";
+import { searchParams } from "@/lib/client/nav";
 import type { Content, ReadingSettings } from "@/lib/types";
 
 export default function PreparePage() {
@@ -29,7 +30,7 @@ export default function PreparePage() {
 
   useEffect(() => {
     if (!ready) return;
-    const freeFromUrl = new URLSearchParams(window.location.search).get("modo") === "free";
+    const freeFromUrl = searchParams().get("modo") === "free";
     setSettings(freeFromUrl ? { ...saved, mode: "free" } : saved);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
