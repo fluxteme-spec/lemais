@@ -9,7 +9,7 @@ import { aiAvailable } from "@/lib/client/actions";
 import type { Content } from "@/lib/types";
 import Link from "next/link";
 import { useAccount } from "@/components/Account";
-import { InstallApp } from "@/components/Pwa";
+import { InstallApp, UpdateApp } from "@/components/Pwa";
 import { getConnection } from "@/lib/ai/connection";
 import { PROVIDERS, type AIConnection } from "@/lib/ai/providers";
 
@@ -110,6 +110,9 @@ export default function SettingsPage() {
         </h2>
         <div className="mt-2">
           <InstallApp />
+        </div>
+        <div className="mt-4">
+          <UpdateApp />
         </div>
       </section>
 
