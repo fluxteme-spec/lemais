@@ -1,0 +1,14 @@
+{
+  "env": {
+    "TZ": "America/Sao_Paulo"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git add memoria*)",
+      "Bash(git commit -m *)",
+      "Bash(git push*)",
+      "Bash(git pull*)",
+      "Bash(date*)"
+    ]
+  }
+}
