@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Next.js precisa de scripts inline para hidratação e para o tema sem piscar
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
               "style-src 'self' 'unsafe-inline'",
               // imagens de propagandas cadastradas no painel vêm de endereços https
               "img-src 'self' data: blob: https:",

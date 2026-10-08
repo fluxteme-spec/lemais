@@ -447,7 +447,12 @@ export default function SessionPage() {
       )}
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/" className="btn btn-primary">
+        {content?.filePart && content.filePart.to < content.filePart.total && (
+          <Link href={`/?continuar=${content.id}`} className="btn btn-primary">
+            Continuar: páginas {content.filePart.to + 1}–{Math.min(content.filePart.to + 3, content.filePart.total)} de {content.filePart.total}
+          </Link>
+        )}
+        <Link href="/" className={`btn ${content?.filePart && content.filePart.to < content.filePart.total ? "" : "btn-primary"}`}>
           Ler outro texto
         </Link>
         <SharePanel session={session} content={content} attempt={primary} />

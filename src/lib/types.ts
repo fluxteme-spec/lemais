@@ -34,6 +34,16 @@ export interface Content {
   curatedQuestions?: CuratedQuestion[] | null;
   /** Presente quando o texto é uma versão adaptada por IA de outro conteúdo. */
   adaptation?: Adaptation | null;
+  /** Trecho de um arquivo grande (PDF/Word) lido em janelas de poucas páginas. */
+  filePart?: FilePart | null;
+}
+
+export interface FilePart {
+  name: string;
+  size: number;
+  from: number;
+  to: number;
+  total: number;
 }
 
 export type AdaptStyle = "simples" | "cientifico" | "academico" | "classico";
@@ -58,14 +68,7 @@ export interface CuratedQuestion {
 export type ReadingMode = "rsvp" | "chunk" | "guided" | "free";
 export type ChunkSize = 2 | 3 | 4 | "auto";
 
-export type SessionStatus =
-  | "preparado"
-  | "lendo"
-  | "pausado"
-  | "concluida"
-  | "questionario"
-  | "finalizada"
-  | "parcial";
+export type SessionStatus = "preparado" | "lendo" | "pausado" | "concluida" | "questionario" | "finalizada" | "parcial";
 
 export interface ReadingSettings {
   mode: ReadingMode;

@@ -12,13 +12,16 @@ import { DIFFICULTY_LABEL } from "@/lib/session";
 import { useAppState } from "@/components/AppState";
 import { useAccount, useOnSynced } from "@/components/Account";
 import { AdSlot } from "@/components/AdSlot";
+import { ImportPanel, type Imported } from "@/components/ImportPanel";
 import type { ReadingSession } from "@/lib/types";
 
-type Source = "texto" | "link" | "treino";
+type Source = "texto" | "link" | "arquivo" | "foto" | "treino";
 
 const SOURCES: { id: Source; label: string }[] = [
   { id: "texto", label: "Colar texto" },
   { id: "link", label: "Ler de um link" },
+  { id: "arquivo", label: "Anexar arquivo" },
+  { id: "foto", label: "Escanear com a câmera" },
   { id: "treino", label: "Escolher texto de treino" },
 ];
 
@@ -33,6 +36,7 @@ export default function HomePage() {
   const [busy, setBusy] = useState(false);
   const [resume, setResume] = useState<ReadingSession | null>(null);
   const [firstVisit, setFirstVisit] = useState(false);
+  const [resume_file, setResumeFile] = useState<{ name: string; size: number; nextFrom: number } | null>(null);
 
   const acc = useAccount();
   const loadResume = () =>
@@ -43,6 +47,18 @@ export default function HomePage() {
   useOnSynced(loadResume);
   useEffect(() => {
     void loadResume();
+    const cont = new URLSearchParams(window.location.search).get("continuar");
+    if (cont) {
+      repo()
+        .getContent(cont)
+        .then((c) => {
+          if (c?.filePart && c.filePart.to < c.filePart.total) {
+            setResumeFile({ name: c.filePart.name, size: c.filePart.size, nextFrom: c.filePart.to + 1 });
+            setSource("arquivo");
+          }
+        })
+        .catch(() => {});
+    }
     repo()
       .getFlag("onboarded")
       .then((v) => setFirstVisit(!v))
@@ -73,7 +89,11 @@ export default function HomePage() {
     const firstLine = blocks[0]?.text ?? "";
     const autoTitle = title.trim() || (firstLine.length <= 80 ? firstLine : firstLine.slice(0, 77).trimEnd() + "…");
     const c = makeContent({ sourceType: "pasted", title: autoTitle, blocks });
-    save(repo().putContent(c).then(() => c.id));
+    save(
+      repo()
+        .putContent(c)
+        .then(() => c.id),
+    );
   }
 
   async function prepareLink(e: React.FormEvent) {
@@ -105,7 +125,26 @@ export default function HomePage() {
       finalUrl: d.finalUrl,
       warnings: d.warnings,
     });
-    save(repo().putContent(c).then(() => c.id));
+    save(
+      repo()
+        .putContent(c)
+        .then(() => c.id),
+    );
+  }
+
+  function prepareImported(r: Imported) {
+    const blocks = parsePlainText(r.text);
+    const v = validateText(blocks, r.text.length);
+    if (!v.ok) {
+      setError(v.message);
+      return;
+    }
+    const c = makeContent({ sourceType: "pasted", title: r.title, blocks, warnings: r.warning ? [r.warning] : [], filePart: r.filePart });
+    save(
+      repo()
+        .putContent(c)
+        .then(() => c.id),
+    );
   }
 
   function chooseTraining(id: string, mode?: "free") {
@@ -114,7 +153,9 @@ export default function HomePage() {
 
   function dismissIntro() {
     setFirstVisit(false);
-    repo().setFlag("onboarded", true).catch(() => {});
+    repo()
+      .setFlag("onboarded", true)
+      .catch(() => {});
   }
 
   return (
@@ -125,8 +166,8 @@ export default function HomePage() {
             Ler mais rápido só importa se você continuar entendendo.
           </h2>
           <p className="mt-2 max-w-prose text-muted">
-            Aqui você experimenta modos de leitura, ajusta o ritmo e, se quiser, responde algumas perguntas para ver como foi a
-            compreensão. Não precisa de cadastro; com uma conta, suas leituras ficam salvas em todos os seus aparelhos.
+            Aqui você experimenta modos de leitura, ajusta o ritmo e, se quiser, responde algumas perguntas para ver como foi a compreensão. Não precisa de
+            cadastro; com uma conta, suas leituras ficam salvas em todos os seus aparelhos.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
@@ -230,6 +271,8 @@ export default function HomePage() {
             </button>
           </form>
         )}
+
+        {(source === "arquivo" || source === "foto") && <ImportPanel key={source} mode={source} onReady={prepareImported} resume={resume_file} />}
 
         {source === "treino" && (
           <ul className="divide-y divide-line border-y border-line">

@@ -20,6 +20,7 @@ export function makeContent(input: {
   warnings?: string[];
   curatedQuestions?: Content["curatedQuestions"];
   adaptation?: Content["adaptation"];
+  filePart?: Content["filePart"];
 }): Content {
   return {
     id: newId(),
@@ -41,6 +42,7 @@ export function makeContent(input: {
     createdAt: new Date().toISOString(),
     curatedQuestions: input.curatedQuestions ?? null,
     adaptation: input.adaptation ?? null,
+    filePart: input.filePart ?? null,
   };
 }
 
