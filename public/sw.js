@@ -4,7 +4,7 @@
  *   (ou a página inicial), para que o conteúdo já salvo no aparelho continue acessível.
  * - Nunca guarda respostas de /api, /auth, /admin nem de outros domínios.
  */
-const VERSION = "lemais-v2";
+const VERSION = "lemais-v3";
 const SHELL = ["/", "/treinar", "/progresso", "/configuracoes", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

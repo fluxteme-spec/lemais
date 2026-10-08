@@ -6,6 +6,7 @@ import { AccountProvider } from "@/components/Account";
 import { AccountBanner } from "@/components/AccountBanner";
 import { PwaRegister } from "@/components/Pwa";
 import { Footer } from "@/components/Footer";
+import { InstallPopup } from "@/components/InstallPopup";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
             <Footer />
             <PwaRegister />
+            <InstallPopup />
           </AccountProvider>
         </AppStateProvider>
       </body>

@@ -10,6 +10,24 @@ interface InstallPromptEvent extends Event {
 let deferred: InstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
 
+export function canPromptInstall() {
+  return !!deferred;
+}
+export function onInstallPromptChange(fn: () => void) {
+  listeners.add(fn);
+  return () => void listeners.delete(fn);
+}
+/** Abre o instalador nativo (Android/desktop). Retorna true se a pessoa aceitou. */
+export async function promptInstall(): Promise<boolean> {
+  if (!deferred) return false;
+  const d = deferred;
+  deferred = null;
+  listeners.forEach((l) => l());
+  await d.prompt();
+  const r = await d.userChoice;
+  return r.outcome === "accepted";
+}
+
 export function PwaRegister() {
   const [updated, setUpdated] = useState(false);
   useEffect(() => {
@@ -26,8 +44,16 @@ export function PwaRegister() {
       deferred = e as InstallPromptEvent;
       listeners.forEach((l) => l());
     };
+    const onInstalled = () => {
+      deferred = null;
+      listeners.forEach((l) => l());
+    };
     window.addEventListener("beforeinstallprompt", onPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
   if (!updated) return null;
   return (
