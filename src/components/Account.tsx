@@ -15,6 +15,8 @@ export interface Profile {
   invited_by: string | null;
   blocked: boolean;
   created_at: string;
+  donor_since?: string | null;
+  donation_claimed_at?: string | null;
 }
 
 interface AccountState {

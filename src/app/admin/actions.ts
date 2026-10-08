@@ -24,9 +24,29 @@ export async function setBlocked(userId: string, blocked: boolean): Promise<Acti
   const { error } = await sb.from("profiles").update({ blocked }).eq("id", userId);
   if (error) return fail("Não foi possível alterar o usuário.");
   // impede novos logins enquanto suspenso
-  await sb.auth.admin.updateUserById(userId, { ban_duration: blocked ? "876000h" : "none" });
+  await sb.auth.admin.updateUserById(userId, {
+    ban_duration: blocked ? "876000h" : "none",
+  });
   revalidatePath("/admin/usuarios");
-  return { ok: true, message: blocked ? "Usuário suspenso." : "Suspensão removida." };
+  return {
+    ok: true,
+    message: blocked ? "Usuário suspenso." : "Suspensão removida.",
+  };
+}
+
+export async function setDonor(userId: string, donor: boolean): Promise<ActionResult> {
+  await requireAdmin();
+  if (!z.string().uuid().safeParse(userId).success) return fail("Usuário inválido.");
+  const { error } = await adminSupabase()
+    .from("profiles")
+    .update({ donor_since: donor ? new Date().toISOString() : null })
+    .eq("id", userId);
+  if (error) return fail("Não foi possível alterar a medalha.");
+  revalidatePath("/admin/usuarios");
+  return {
+    ok: true,
+    message: donor ? "Medalha de doador concedida." : "Medalha removida.",
+  };
 }
 
 export async function deleteUser(userId: string): Promise<ActionResult> {
@@ -37,20 +57,31 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
   if (error) return fail("Não foi possível excluir o usuário.");
   revalidatePath("/admin/usuarios");
   revalidatePath("/admin");
-  return { ok: true, message: "Usuário e todos os dados dele foram excluídos." };
+  return {
+    ok: true,
+    message: "Usuário e todos os dados dele foram excluídos.",
+  };
 }
 
 // ---------- Propagandas ----------
 
 const PLACEMENTS = ["home", "resultado", "progresso", "treinar"] as const;
-const httpsUrl = z.string().trim().url().refine((u) => u.startsWith("https://"), "Use um endereço https://");
+const httpsUrl = z
+  .string()
+  .trim()
+  .url()
+  .refine((u) => u.startsWith("https://"), "Use um endereço https://");
 
 const AdSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(1, "Informe o título.").max(80),
   body: z.string().trim().max(200).optional(),
   image_url: z.union([httpsUrl, z.literal("")]).optional(),
-  link_url: z.string().trim().url("Informe o link de destino.").refine((u) => /^https?:\/\//.test(u), "Link inválido."),
+  link_url: z
+    .string()
+    .trim()
+    .url("Informe o link de destino.")
+    .refine((u) => /^https?:\/\//.test(u), "Link inválido."),
   cta: z.string().trim().max(30).optional(),
   placements: z.array(z.enum(PLACEMENTS)).min(1, "Escolha ao menos um local."),
   starts_at: z.string().optional(),
@@ -96,7 +127,10 @@ export async function saveAd(_prev: ActionResult | null, form: FormData): Promis
   const { error } = d.id ? await sb.from("ads").update(row).eq("id", d.id) : await sb.from("ads").insert(row);
   if (error) return fail("Não foi possível salvar a propaganda.");
   revalidatePath("/admin/propagandas");
-  return { ok: true, message: d.id ? "Propaganda atualizada." : "Propaganda criada." };
+  return {
+    ok: true,
+    message: d.id ? "Propaganda atualizada." : "Propaganda criada.",
+  };
 }
 
 export async function toggleAd(id: string, active: boolean): Promise<ActionResult> {
@@ -104,7 +138,10 @@ export async function toggleAd(id: string, active: boolean): Promise<ActionResul
   const { error } = await adminSupabase().from("ads").update({ active }).eq("id", id);
   if (error) return fail("Não foi possível alterar a propaganda.");
   revalidatePath("/admin/propagandas");
-  return { ok: true, message: active ? "Propaganda ativada." : "Propaganda pausada." };
+  return {
+    ok: true,
+    message: active ? "Propaganda ativada." : "Propaganda pausada.",
+  };
 }
 
 export async function deleteAd(id: string): Promise<ActionResult> {
@@ -162,7 +199,11 @@ export async function saveSuggestedText(_prev: ActionResult | null, form: FormDa
       const report = validateQuestions({ questions: list }, tokenize(blocks), "adm");
       if (report.rejected.length) {
         const r = report.rejected[0];
-        return fail(r.index >= 0 ? `Pergunta ${r.index + 1}: ${r.reason}. A evidência precisa ser um trecho copiado do texto.` : "Perguntas incompletas: preencha enunciado, 4 alternativas, resposta, explicação e evidência.");
+        return fail(
+          r.index >= 0
+            ? `Pergunta ${r.index + 1}: ${r.reason}. A evidência precisa ser um trecho copiado do texto.`
+            : "Perguntas incompletas: preencha enunciado, 4 alternativas, resposta, explicação e evidência.",
+        );
       }
       questions = list;
     }
@@ -183,7 +224,10 @@ export async function saveSuggestedText(_prev: ActionResult | null, form: FormDa
   const { error } = d.id ? await sb.from("suggested_texts").update(row).eq("id", d.id) : await sb.from("suggested_texts").insert(row);
   if (error) return fail("Não foi possível salvar o texto.");
   revalidatePath("/admin/textos");
-  return { ok: true, message: d.published ? "Texto salvo e publicado em Treinar." : "Texto salvo como rascunho." };
+  return {
+    ok: true,
+    message: d.published ? "Texto salvo e publicado em Treinar." : "Texto salvo como rascunho.",
+  };
 }
 
 export async function deleteSuggestedText(id: string): Promise<ActionResult> {

@@ -15,6 +15,9 @@ export function Footer() {
         <Link href="/privacidade" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
           Privacidade
         </Link>
+        <Link href="/apoie" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+          Apoie o LêMais
+        </Link>
         <Link href="/conectar-ia" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
           Conectar IA
         </Link>

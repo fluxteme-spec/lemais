@@ -1,6 +1,6 @@
 import { adminSupabase } from "@/lib/supabase/server";
 import { AdminButton } from "../AdminButton";
-import { deleteUser, setBlocked } from "../actions";
+import { deleteUser, setBlocked, setDonor } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,8 @@ interface ProfileRow {
   visit_days: number;
   age_confirmed_at: string | null;
   invited_by: string | null;
+  donor_since: string | null;
+  donation_claimed_at: string | null;
 }
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { dateStyle: "short" });
@@ -23,9 +25,17 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const sb = adminSupabase();
   const { data: list } = await sb.auth.admin.listUsers({ page, perPage: 200 });
   const users = (list?.users ?? []).filter((u) => !q || (u.email ?? "").toLowerCase().includes(q.toLowerCase()));
-  const { data: profiles } = await sb.from("profiles").select("*").in("id", users.map((u) => u.id).length ? users.map((u) => u.id) : ["00000000-0000-0000-0000-000000000000"]);
+  const { data: profiles } = await sb
+    .from("profiles")
+    .select("*")
+    .in("id", users.map((u) => u.id).length ? users.map((u) => u.id) : ["00000000-0000-0000-0000-000000000000"]);
   const byId = new Map((profiles as ProfileRow[] | null)?.map((p) => [p.id, p]) ?? []);
-  const { data: readings } = await sb.from("user_records").select("user_id").eq("kind", "session").eq("deleted", false).in("user_id", users.map((u) => u.id).length ? users.map((u) => u.id) : ["00000000-0000-0000-0000-000000000000"]);
+  const { data: readings } = await sb
+    .from("user_records")
+    .select("user_id")
+    .eq("kind", "session")
+    .eq("deleted", false)
+    .in("user_id", users.map((u) => u.id).length ? users.map((u) => u.id) : ["00000000-0000-0000-0000-000000000000"]);
   const readCount = new Map<string, number>();
   (readings ?? []).forEach((r) => readCount.set(r.user_id, (readCount.get(r.user_id) ?? 0) + 1));
 
@@ -55,15 +65,27 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                     {p?.display_name ?? "—"} · {provider === "google" ? "Google" : "E-mail"} · desde {fmt(u.created_at)}
                   </p>
                   <p className="text-sm">
-                    Último acesso {p ? fmt(p.last_seen_at) : "—"} · {p?.visit_days ?? 0} {p?.visit_days === 1 ? "dia de uso" : "dias de uso"} · {readCount.get(u.id) ?? 0} leituras
+                    Último acesso {p ? fmt(p.last_seen_at) : "—"} · {p?.visit_days ?? 0} {p?.visit_days === 1 ? "dia de uso" : "dias de uso"} ·{" "}
+                    {readCount.get(u.id) ?? 0} leituras
                     {p?.invited_by ? " · veio por convite" : ""}
                     {!p?.age_confirmed_at ? " · cadastro incompleto" : ""}
                     {p?.blocked ? " · SUSPENSO" : ""}
+                    {p?.donor_since ? " · ★ DOADOR" : p?.donation_claimed_at ? ` · pediu a medalha de doador em ${fmt(p.donation_claimed_at)}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <AdminButton action={setBlocked.bind(null, u.id, !p?.blocked)} label={p?.blocked ? "Reativar" : "Suspender"} confirmText={p?.blocked ? undefined : `Suspender ${u.email}? A pessoa não conseguirá entrar.`} />
-                  <AdminButton action={deleteUser.bind(null, u.id)} label="Excluir" danger confirmText={`Excluir ${u.email} e todos os dados? Não é possível desfazer.`} />
+                  <AdminButton action={setDonor.bind(null, u.id, !p?.donor_since)} label={p?.donor_since ? "Remover medalha" : "Conceder medalha"} />
+                  <AdminButton
+                    action={setBlocked.bind(null, u.id, !p?.blocked)}
+                    label={p?.blocked ? "Reativar" : "Suspender"}
+                    confirmText={p?.blocked ? undefined : `Suspender ${u.email}? A pessoa não conseguirá entrar.`}
+                  />
+                  <AdminButton
+                    action={deleteUser.bind(null, u.id)}
+                    label="Excluir"
+                    danger
+                    confirmText={`Excluir ${u.email} e todos os dados? Não é possível desfazer.`}
+                  />
                 </div>
               </div>
             </li>

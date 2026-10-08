@@ -15,12 +15,18 @@ export default function TermsPage() {
       <p>É preciso ter 13 anos ou mais para criar uma conta. Menores de 18 anos devem usar o app com conhecimento dos responsáveis.</p>
 
       <h2>O que o app faz e o que não promete</h2>
-      <p>O LêMais ajuda a experimentar modos e ritmos de leitura e mostra métricas sobre as suas sessões. Ele não garante aumento de velocidade, compreensão ou memória, e as métricas não comprovam que um texto foi lido ou entendido. Versões adaptadas e perguntas criadas por IA podem conter erros.</p>
+      <p>
+        O LêMais ajuda a experimentar modos e ritmos de leitura e mostra métricas sobre as suas sessões. Ele não garante aumento de velocidade, compreensão ou
+        memória, e as métricas não comprovam que um texto foi lido ou entendido. Versões adaptadas e perguntas criadas por IA podem conter erros.
+      </p>
 
       <h2>Seu conteúdo</h2>
       <ul>
         <li>Você é responsável pelos textos que cola ou importa e deve ter o direito de usá-los.</li>
-        <li>Respeite os direitos autorais: não compartilhe textos integrais de terceiros sem autorização. Os cartões de compartilhamento mostram apenas título, fonte e um trecho curto.</li>
+        <li>
+          Respeite os direitos autorais: não compartilhe textos integrais de terceiros sem autorização. Os cartões de compartilhamento mostram apenas título,
+          fonte e um trecho curto.
+        </li>
         <li>Não use o app para conteúdo ilegal, ofensivo ou que viole direitos de outras pessoas.</li>
       </ul>
 
@@ -29,6 +35,14 @@ export default function TermsPage() {
 
       <h2>Propagandas</h2>
       <p>O app é gratuito e pode exibir propagandas identificadas como “Patrocinado”, nunca durante a leitura ou o questionário.</p>
+
+      <h2>Doações</h2>
+      <p>
+        O LêMais é gratuito e é mantido por doações voluntárias e propagandas. Doar é opcional, não dá acesso a recursos extras e não é uma compra: o valor
+        doado não é reembolsável e não cria obrigação de manter qualquer recurso. O pagamento é feito no Mercado Pago, que trata os dados de pagamento; o LêMais
+        não recebe nem guarda dados de cartão ou de conta. Quem doa pode receber uma medalha de apoiador no perfil, concedida manualmente depois da conferência
+        da doação.
+      </p>
 
       <h2>Suspensão</h2>
       <p>Contas que violem estes termos podem ser suspensas ou excluídas.</p>

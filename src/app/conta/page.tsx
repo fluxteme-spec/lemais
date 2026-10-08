@@ -6,13 +6,17 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
 import { clearInvite, pendingInvite, useAccount } from "@/components/Account";
 import { repo } from "@/lib/persistence";
+import { DonorBadge } from "@/components/DonorBadge";
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "ainda não";
   const s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
   if (s < 60) return "agora há pouco";
   if (s < 3600) return `há ${Math.round(s / 60)} min`;
-  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  return new Date(iso).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export default function AccountPage() {
@@ -57,7 +61,11 @@ export default function AccountPage() {
       const { data } = await supabase()!.from("shares").select("user_id").eq("id", invite).maybeSingle();
       invitedBy = (data?.user_id as string | undefined) ?? null;
     }
-    const { error } = await supabase()!.rpc("update_my_profile", { p_display_name: name, p_confirm: confirm, p_invited_by: invitedBy });
+    const { error } = await supabase()!.rpc("update_my_profile", {
+      p_display_name: name,
+      p_confirm: confirm,
+      p_invited_by: invitedBy,
+    });
     setBusy(false);
     if (error) {
       setErr("Não foi possível salvar. Tente de novo.");
@@ -88,7 +96,13 @@ export default function AccountPage() {
             <p className="mt-1 text-sm text-muted">Aparece nos cartões que você compartilhar.</p>
           </div>
           <div className="flex items-start gap-3">
-            <input id="aceite" type="checkbox" className="mt-1 size-6 shrink-0 accent-[var(--ink)]" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+            <input
+              id="aceite"
+              type="checkbox"
+              className="mt-1 size-6 shrink-0 accent-[var(--ink)]"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
             <label htmlFor="aceite">
               Tenho 13 anos ou mais e aceito os{" "}
               <Link href="/termos" target="_blank" className="underline underline-offset-4">
@@ -122,7 +136,17 @@ export default function AccountPage() {
   return (
     <div className="pt-10">
       <h1 className="font-serif text-4xl font-bold">Minha conta</h1>
-      <p className="mt-2 text-muted">{acc.user.email}</p>
+      <p className="mt-2 text-muted">
+        {acc.user.email} {acc.profile.donor_since && <DonorBadge />}
+      </p>
+      {!acc.profile.donor_since && (
+        <p className="mt-2 text-sm">
+          <Link href="/apoie" className="underline underline-offset-4">
+            Apoie o LêMais
+          </Link>{" "}
+          e ganhe a medalha de apoiador.
+        </p>
+      )}
       {msg && (
         <p role="status" className="mt-4 border-l-4 border-ok pl-3">
           {msg}
@@ -189,8 +213,8 @@ export default function AccountPage() {
       {pendingOut !== null && (
         <div role="alert" className="mt-4 border-l-4 border-danger pl-3">
           <p>
-            {pendingOut} {pendingOut === 1 ? "alteração ainda não foi enviada" : "alterações ainda não foram enviadas"} para a conta. Ao sair, os dados
-            deste aparelho são apagados e essas alterações se perdem.
+            {pendingOut} {pendingOut === 1 ? "alteração ainda não foi enviada" : "alterações ainda não foram enviadas"} para a conta. Ao sair, os dados deste
+            aparelho são apagados e essas alterações se perdem.
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
             <button type="button" className="btn" onClick={() => void acc.syncNow().then(() => setPendingOut(null))}>
@@ -227,8 +251,12 @@ export default function AccountPage() {
               .then((x) => x.json())
               .catch(() => ({ ok: false }));
             if (r.ok) {
-              await supabase()!.auth.signOut().catch(() => {});
-              await repo().clearAll().catch(() => {});
+              await supabase()!
+                .auth.signOut()
+                .catch(() => {});
+              await repo()
+                .clearAll()
+                .catch(() => {});
               window.location.href = "/";
             } else {
               setDeleting(false);

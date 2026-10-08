@@ -2,5 +2,8 @@
 export const LEGAL = {
   responsavel: process.env.NEXT_PUBLIC_RESPONSAVEL || "o responsável pelo LêMais",
   contato: process.env.NEXT_PUBLIC_CONTATO || "",
-  atualizadoEm: "4 de outubro de 2026",
+  atualizadoEm: "8 de outubro de 2026",
 };
+
+/** Link de doação (Mercado Pago). Pode ser trocado pela variável NEXT_PUBLIC_DOACAO_URL. */
+export const DOACAO_URL = process.env.NEXT_PUBLIC_DOACAO_URL || "https://link.mercadopago.com.br/lemais";
