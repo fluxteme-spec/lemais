@@ -4,7 +4,7 @@
  * 10 s (se o Safari fechar, nada se perde) + nível do microfone para o medidor.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apagar, guardar, novaGravacao, RASCUNHO, type Gravacao } from "./store";
+import { apagarRascunho, guardar, novaGravacao, RASCUNHO, type Gravacao } from "./store";
 import { lerAjustes } from "./ajustes";
 
 export type Estado = "parado" | "gravando" | "pausado";
@@ -143,9 +143,10 @@ export function useGravacao() {
     await terminou;
     desligar();
     rec.current = null;
-    const g = novaGravacao(new Blob(pedacos.current, { type: r.mimeType }), duracao, { template: lerAjustes().template });
+    const aj = lerAjustes();
+    const g = novaGravacao(new Blob(pedacos.current, { type: r.mimeType }), duracao, { template: aj.template, personaId: aj.personaId, projetoId: aj.projetoId || undefined });
     await guardar(g);
-    await apagar(RASCUNHO);
+    await apagarRascunho();
     setEstado("parado");
     return g;
   }, [desligar, tempo]);

@@ -1,0 +1,31 @@
+# Copie este arquivo para geoleto/lemais em .github/workflows/espelhar.yml (uma vez).
+# A cada 10 minutos ele traz o que mudou em fluxteme-spec/lemais (onde o Claude trabalha)
+# e o Vercel publica sozinho. Mantém os próprios workflows do geoleto/lemais.
+name: Espelhar fluxteme-spec/lemais
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: espelhar
+jobs:
+  espelhar:
+    if: github.repository == 'geoleto/lemais'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trazer a versão nova
+        run: |
+          git config user.name "espelho-lemais"
+          git config user.email "espelho-lemais@users.noreply.github.com"
+          git fetch https://github.com/fluxteme-spec/lemais.git main
+          ORIGEM=$(git rev-parse FETCH_HEAD)
+          if git merge-base --is-ancestor "$ORIGEM" HEAD 2>/dev/null; then echo "Já está em dia."; exit 0; fi
+          git merge --no-commit --allow-unrelated-histories -s ours "$ORIGEM"
+          git read-tree --reset -u "$ORIGEM"
+          git checkout HEAD -- .github/workflows
+          git commit -m "Espelhar fluxteme-spec/lemais@${ORIGEM:0:7}"
+          git push origin HEAD:main

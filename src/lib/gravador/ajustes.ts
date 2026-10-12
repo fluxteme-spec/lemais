@@ -1,18 +1,30 @@
 /** Preferências do gravador neste aparelho. */
+import type { MotorTranscricao } from "./store";
+
 export interface AjustesGravador {
   modelo: string;
   idioma: string;
-  atalho: string;
+  atalho: string; // resumo com Apple Intelligence
+  atalhoLembretes: string; // tarefas → Lembretes
   template: string;
-  auto: boolean;
+  auto: boolean; // transcrever ao parar
+  motor: MotorTranscricao; // quem transcreve por padrão
+  autoIA: boolean; // gerar resumo, tarefas e mapa ao terminar a transcrição
+  personaId: string; // última persona usada
+  projetoId: string; // último projeto usado ("" = sem projeto)
 }
 
 export const PADRAO: AjustesGravador = {
   modelo: "onnx-community/whisper-small",
   idioma: "portuguese",
   atalho: "Resumir Gravador",
+  atalhoLembretes: "Tarefas para Lembretes",
   template: "reuniao",
   auto: true,
+  motor: "aparelho",
+  autoIA: true,
+  personaId: "gestor-operacional",
+  projetoId: "",
 };
 
 const CHAVE = "lemais-gravador-ajustes";

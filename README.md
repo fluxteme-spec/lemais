@@ -45,15 +45,22 @@ Assinaturas de consumidor (ChatGPT Plus, Claude Pro, Gemini Advanced) não podem
 
 Opcional: o dono da instalação pode definir `ANTHROPIC_API_KEY` no servidor, usado apenas quando o usuário não conectou nenhuma IA.
 
-## Gravador (em construção — plano em `PLANO-GRAVADOR.md`)
+## Gravador (`/gravar`) — plano em `PLANO-GRAVADOR.md`
 
-Seção **Gravar** (`/gravar`): grava reuniões, visitas e ideias, transcreve e resume **no próprio aparelho**.
+Grava reuniões, visitas e ideias; transcreve; e gera **resumo, tarefas, mapa mental 3D, ata e relatório** com a persona escolhida.
 
-- **Gravar:** microfone do navegador, tela sempre acesa, pausa, medidor de nível. Um rascunho é salvo a cada 10 s e recuperado se o app fechar no meio.
-- **Atalho do iPhone:** abrir `/gravar/gravando` já começa a gravar (Botão de Ação ou Siri; passo a passo em `/gravar/ajustes`).
-- **Transcrição no aparelho:** Whisper (transformers.js) num Web Worker, pela GPU (WebGPU) ou CPU (WASM). O modelo é baixado uma vez do Hugging Face e fica em cache; o motor ONNX é servido pelo próprio app (`public/ort`, copiado no `postinstall`).
-- **Resumo:** rápido e local (destaques, pendências, palavras-chave) ou pelo Apple Intelligence via Atalho (área de transferência).
-- **Dados:** IndexedDB próprio (`lemais-gravador`), separado das leituras. Nada sai do aparelho nesta fase.
+- **Gravar:** microfone do navegador, tela sempre acesa, pausa, medidor. Rascunho a cada 10 s, recuperado se o app fechar.
+- **Atalhos do iPhone:**
+  - *Gravar e enviar ao LêMais* (Botão de Ação, grava com a tela bloqueada): o Atalho envia o áudio para a **caixa de entrada** (Supabase Storage, bucket privado `entrada`). Só aceita envio na pasta de um código pessoal válido (`gravador_tokens`); só o dono lê e apaga. O app importa e apaga da nuvem.
+  - *Gravar no LêMais*: abre `/gravar/gravando`, que já começa a gravar.
+  - *Resumir Gravador* (Apple Intelligence) e *Tarefas para Lembretes*, via área de transferência.
+- **Transcrição:** no aparelho (Whisper/transformers.js num Web Worker, WebGPU ou WASM; motor ONNX em `public/ort`, copiado no `postinstall`) ou pela **IA conectada** (OpenAI Whisper com horários; Gemini direto ou via OpenRouter, separando quem fala), em partes de 5 min. A chave fica no navegador; o áudio vai direto ao provedor.
+- **Personas:** biblioteca editável (`/gravar/personas`), 4 prontas (Juliana, Gestor operacional, Professora de italiano, Secretária executiva). Escolhida em cada gravação; projetos só organizam.
+- **Saídas (IA conectada):** resumo + tarefas + mapa numa chamada (automática após a transcrição); ata e relatório sob demanda. Respostas validadas (`src/lib/gravador/ia.ts`).
+- **Mapa 3D:** `3d-force-graph` (three.js), carregado sob demanda: física, arrastar, toque acende vizinhos, giro automático, foto PNG. **Grafo Geral** (`/gravar/grafo`) funde ideias de mesmo nome entre gravações; filtro por projeto e período.
+- **Compartilhar:** folha do iPhone (texto da aba), imagem do mapa, áudio, **PDF** (`/gravar/[id]/imprimir`, com a marca) e **link público** `/g/[id]` (só leitura, sem áudio, 1/7/30 dias, revogável em Ajustes).
+- **Dados:** IndexedDB `lemais-gravador` (gravações, personas, projetos). Logado, o texto sincroniza na tabela `gravacoes` (vale a alteração mais recente; exclusões sincronizam). Banco: `supabase/migrations/20261012010000_gravador.sql`.
+- **Publicação:** o Vercel publica `geoleto/lemais`, que espelha este repositório com `scripts/espelhar-geoleto.yml`.
 
 ## Fase 1 — app web instalável, contas e painel
 
