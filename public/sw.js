@@ -4,8 +4,8 @@
  *   (ou a página inicial), para que o conteúdo já salvo no aparelho continue acessível.
  * - Nunca guarda respostas de /api, /auth, /admin nem de outros domínios.
  */
-const VERSION = "lemais-v4";
-const SHELL = ["/", "/treinar", "/progresso", "/configuracoes", "/gravar", "/gravar/gravando", "/gravar/ajustes", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png"];
+const VERSION = "lemais-v5";
+const SHELL = ["/", "/treinar", "/progresso", "/configuracoes", "/gravar", "/gravar/gravando", "/gravar/ajustes", "/gravar/grafo", "/gravar/personas", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL).catch(() => undefined)).then(() => self.skipWaiting()));
