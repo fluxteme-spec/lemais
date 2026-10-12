@@ -172,3 +172,14 @@ Não executado: lint (não configurado), auditoria com leitor de tela real e cha
 ## Próximas etapas (não implementadas)
 
 Treino de avanço, percepção visual, skimming, scanning, ritmo adaptativo entre sessões, treinos rápidos de 3/5/10 min, avaliação de retenção posterior, faixa eficiente experimental, conta e sincronização (PostgreSQL com isolamento por usuário, via a interface `Repository`), cache offline e lint.
+
+## Tag NFC (app à parte em `/nfc`)
+
+PWA independente para **ler e gravar tags NFC**, em `public/nfc/` (HTML, CSS e JS puros, sem build). Com o site no ar, abra `https://SEU-DOMINIO/nfc` no **Chrome do Android** e use **Instalar**.
+
+- **Ler:** número de série (UID) em vários formatos — original, sem dois-pontos, bytes invertidos (`A3:2B:CC:11` → `11CC2BA3`), decimal, decimal invertido, 10 dígitos e Wiegand 26 — e o conteúdo NDEF (texto, link, telefone, Wi-Fi, contato, JSON, Smart Poster, bytes em hex). Leitura contínua opcional.
+- **Gravar:** texto, link, telefone, WhatsApp, e-mail, SMS, Wi-Fi, contato (vCard), localização e JSON; vários registros na mesma tag; copiar uma tag lida para outra.
+- **Ferramentas:** apagar tag, bloquear tag (permanente, com confirmação) e conversor de UID.
+- **Histórico** de leituras no aparelho, com exportação CSV (abre no Excel).
+
+Limitações da Web NFC: só Chrome/Android com NFC ligado e página em https; iPhone não suporta. Tags MIFARE Classic só funcionam em celulares com chip NXP, e a Web NFC lê apenas conteúdo NDEF (não lê setores/blocos crus).

@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["linkedom", "@mozilla/readability"],
   poweredByHeader: false,
+  // app independente de leitura e gravação de tags NFC (arquivos em public/nfc)
+  async redirects() {
+    return [
+      { source: "/nfc", destination: "/nfc/index.html", permanent: false },
+      { source: "/nfc/", destination: "/nfc/index.html", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {
