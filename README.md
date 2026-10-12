@@ -45,6 +45,16 @@ Assinaturas de consumidor (ChatGPT Plus, Claude Pro, Gemini Advanced) não podem
 
 Opcional: o dono da instalação pode definir `ANTHROPIC_API_KEY` no servidor, usado apenas quando o usuário não conectou nenhuma IA.
 
+## Gravador (em construção — plano em `PLANO-GRAVADOR.md`)
+
+Seção **Gravar** (`/gravar`): grava reuniões, visitas e ideias, transcreve e resume **no próprio aparelho**.
+
+- **Gravar:** microfone do navegador, tela sempre acesa, pausa, medidor de nível. Um rascunho é salvo a cada 10 s e recuperado se o app fechar no meio.
+- **Atalho do iPhone:** abrir `/gravar/gravando` já começa a gravar (Botão de Ação ou Siri; passo a passo em `/gravar/ajustes`).
+- **Transcrição no aparelho:** Whisper (transformers.js) num Web Worker, pela GPU (WebGPU) ou CPU (WASM). O modelo é baixado uma vez do Hugging Face e fica em cache; o motor ONNX é servido pelo próprio app (`public/ort`, copiado no `postinstall`).
+- **Resumo:** rápido e local (destaques, pendências, palavras-chave) ou pelo Apple Intelligence via Atalho (área de transferência).
+- **Dados:** IndexedDB próprio (`lemais-gravador`), separado das leituras. Nada sai do aparelho nesta fase.
+
 ## Fase 1 — app web instalável, contas e painel
 
 - **PWA:** instalável no celular e no computador (Configurações → Instalar). Um service worker guarda o app para abrir sem conexão. Texto já salvo no aparelho continua acessível; importação, login, IA e sincronização precisam de internet.
