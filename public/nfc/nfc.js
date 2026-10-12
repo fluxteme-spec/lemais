@@ -166,6 +166,9 @@
     if (rec.recordType === "text") {
       init.data = decodeText(rec.data, rec.encoding);
       if (rec.lang) init.lang = rec.lang;
+    } else if (rec.recordType === "url" || rec.recordType === "absolute-url") {
+      // a Web NFC só aceita texto (não bytes) para registros de link
+      init.data = decodeText(rec.data);
     } else if (rec.recordType === "smart-poster") {
       init.data = { records: (rec.toRecords() || []).map(recordToInit) };
     } else if (rec.data && rec.recordType !== "empty") {

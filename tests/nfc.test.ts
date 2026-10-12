@@ -47,4 +47,19 @@ describe("NFC — registros", () => {
     const json = NFC.describeRecord({ recordType: "mime", mediaType: "application/json", data: view(enc.encode('{"a":1}')) });
     expect(json.valor).toBe('{\n  "a": 1\n}');
   });
+
+  it("cópia de tag gera registros aceitos pela Web NFC (link como texto)", () => {
+    const enc = new TextEncoder();
+    const inits = [
+      { recordType: "url", data: view(enc.encode("https://exemplo.com")) },
+      { recordType: "text", encoding: "utf-8", lang: "pt-BR", data: view(enc.encode("Oi")) },
+      { recordType: "mime", mediaType: "application/json", data: view(enc.encode("{}")) },
+      { recordType: "empty", data: null },
+    ].map(NFC.recordToInit) as any[];
+    expect(inits[0]).toEqual({ recordType: "url", data: "https://exemplo.com" });
+    expect(inits[1]).toEqual({ recordType: "text", data: "Oi", lang: "pt-BR" });
+    expect(inits[2].mediaType).toBe("application/json");
+    expect(Array.from(inits[2].data)).toEqual([123, 125]);
+    expect(inits[3]).toEqual({ recordType: "empty" });
+  });
 });
