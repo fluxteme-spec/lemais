@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAccount } from "@/components/Account";
 
-const ITEMS = [
+const ITEMS: { href: string; label: string; short?: string }[] = [
   { href: "/", label: "Ler" },
   { href: "/treinar", label: "Treinar" },
-  { href: "/progresso", label: "Meu progresso" },
+  { href: "/gravar", label: "Gravar" },
+  { href: "/progresso", label: "Meu progresso", short: "Progresso" },
 ];
 
 function isActive(path: string, href: string) {
@@ -29,7 +30,7 @@ export function Wordmark() {
 export function Nav() {
   const path = usePathname() ?? "/";
   const acc = useAccount();
-  if (path.startsWith("/ler/")) return null; // o leitor usa a tela inteira
+  if (path.startsWith("/ler/") || path === "/gravar/gravando") return null; // leitor e gravação usam a tela inteira
   return (
     <>
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2">
@@ -77,7 +78,7 @@ export function Nav() {
         aria-label="Principal"
         className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] sm:hidden"
       >
-        <ul className="grid grid-cols-3">
+        <ul className="grid grid-cols-4">
           {ITEMS.map((i) => (
             <li key={i.href}>
               <Link
@@ -85,7 +86,7 @@ export function Nav() {
                 aria-current={isActive(path, i.href) ? "page" : undefined}
                 className="flex min-h-14 items-center justify-center text-sm font-medium text-muted aria-[current=page]:font-bold aria-[current=page]:text-ink aria-[current=page]:underline aria-[current=page]:decoration-marker aria-[current=page]:decoration-4 aria-[current=page]:underline-offset-8"
               >
-                {i.label}
+                {i.short ?? i.label}
               </Link>
             </li>
           ))}

@@ -14,9 +14,9 @@ fazer faz fez feito pode podem poder vou vamos ia acho sei sabe olha cara the an
 
 const ACAO = /\b(precis\w*|tem que|temos que|tenho que|ficou de|fica de|(vou|vamos|vai) (enviar|mandar|ligar|fazer|agendar|marcar|trocar|verificar|resolver|passar|levar|comprar|preparar|instalar|retirar|entregar|cobrar|revisar|montar)|prazo|até (amanhã|segunda|terça|quarta|quinta|sexta|sábado|domingo|o fim|dia \d+)|combinad\w*|agend\w*|envi\w*|mand\w+|lig\w+ para|verific\w*|providenci\w*|resolv\w*|confirm\w*|pendente|pendência|follow.?up|próximo passo)\b/i;
 
-const norm = (w) => w.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const norm = (w: string) => w.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-export function frases(texto) {
+export function frases(texto: string): string[] {
   return (texto || '')
     .replace(/\s+/g, ' ')
     .split(/(?<=[.!?…])\s+(?=[A-ZÀ-Ý0-9"“])/u)
@@ -24,22 +24,28 @@ export function frases(texto) {
     .filter((f) => f.split(' ').length >= 4);
 }
 
-function palavras(f) {
+function palavras(f: string): string[] {
   return (f.match(/[\p{L}\d]+/gu) || []).map(norm).filter((w) => w.length > 2 && !STOP.has(w));
 }
 
-export function resumir(texto, { maxFrases } = {}) {
+export interface Resumo {
+  destaques: string[];
+  acoes: string[];
+  palavras: string[];
+}
+
+export function resumir(texto: string, { maxFrases }: { maxFrases?: number } = {}): Resumo {
   const fs = frases(texto);
   if (!fs.length) return { destaques: [], acoes: [], palavras: [] };
 
-  const freq = new Map();
+  const freq = new Map<string, number>();
   for (const f of fs) for (const w of palavras(f)) freq.set(w, (freq.get(w) || 0) + 1);
   const topo = Math.max(...freq.values(), 1);
 
   const notas = fs.map((f, i) => {
     const ws = palavras(f);
     if (!ws.length) return 0;
-    const soma = ws.reduce((s, w) => s + freq.get(w) / topo, 0);
+    const soma = ws.reduce((s, w) => s + (freq.get(w) ?? 0) / topo, 0);
     const posicao = i < 2 ? 0.15 : 0; // o começo costuma dizer do que se trata
     return soma / Math.sqrt(ws.length) + posicao;
   });
@@ -63,7 +69,7 @@ export function resumir(texto, { maxFrases } = {}) {
   return { destaques: escolhidas, acoes, palavras: chaves };
 }
 
-export function resumoEmTexto(texto) {
+export function resumoEmTexto(texto: string): string {
   const r = resumir(texto);
   if (!r.destaques.length) return 'Transcrição curta demais para resumir.';
   let out = '## Destaques\n' + r.destaques.map((f) => `- ${f}`).join('\n');

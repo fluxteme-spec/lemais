@@ -20,9 +20,11 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               // imagens de propagandas cadastradas no painel vêm de endereços https
               "img-src 'self' data: blob: https:",
+              // gravações tocadas a partir do próprio aparelho
+              "media-src 'self' blob:",
               "font-src 'self'",
               // a IA do usuário é chamada direto do navegador somente para estes provedores
-              `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""} https://openrouter.ai https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com`,
+              `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""} https://openrouter.ai https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://huggingface.co https://*.huggingface.co https://*.hf.co`,
               "worker-src 'self'",
               "manifest-src 'self'",
               "form-action 'self'",

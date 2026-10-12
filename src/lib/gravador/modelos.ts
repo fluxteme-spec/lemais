@@ -1,5 +1,5 @@
 // Modelos de resumo enviados ao Apple Intelligence pelo Atalho.
-export const MODELOS = {
+export const MODELOS: Record<string, { nome: string; instrucao: string }> = {
   reuniao: {
     nome: 'Reunião',
     instrucao:
@@ -37,7 +37,7 @@ export const MODELOS = {
   },
 };
 
-export function montarPrompt(chave, transcricao) {
+export function montarPrompt(chave: string, transcricao: string): string {
   const m = MODELOS[chave] || MODELOS.reuniao;
   return `${m.instrucao}\n\nTRANSCRIÇÃO:\n${transcricao}`;
 }
