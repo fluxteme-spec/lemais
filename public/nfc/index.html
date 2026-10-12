@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tag NFC</title>
+  <meta name="description" content="Leia, grave, copie e apague tags NFC pelo celular.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icon.svg" alt="" width="28" height="28">
+      <h1>Tag NFC</h1>
+    </div>
+    <button id="install" class="btn ghost small" hidden>Instalar</button>
+  </header>
+
+  <div id="unsupported" class="notice warn" hidden>
+    <strong>NFC indisponível neste navegador.</strong>
+    <p id="unsupported-reason"></p>
+    <ul>
+      <li>Use o <b>Chrome no Android</b> (versão 89 ou mais nova).</li>
+      <li>Abra o app por um endereço <b>https://</b>.</li>
+      <li>Ative o NFC em Configurações do celular → Conexões.</li>
+      <li>iPhone e iPad não permitem NFC em apps web (limitação da Apple).</li>
+    </ul>
+  </div>
+
+  <main>
+    <!-- LER -->
+    <section id="tab-ler" class="tab" data-tab="ler">
+      <div class="scan-card">
+        <div id="scan-ring" class="ring" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="56" height="56"><path d="M20 18c8 8 8 20 0 28M30 12c12 11 12 29 0 40M40 6c16 14 16 38 0 52" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+        </div>
+        <p id="scan-status" class="status">Toque em “Ler tag” e encoste a tag na parte de trás do celular.</p>
+        <div class="row">
+          <button id="btn-scan" class="btn primary">Ler tag</button>
+          <button id="btn-stop" class="btn" hidden>Parar</button>
+        </div>
+        <label class="check"><input type="checkbox" id="opt-continuous" checked> Leitura contínua (várias tags seguidas)</label>
+      </div>
+
+      <div id="result" class="card" hidden>
+        <div class="card-head">
+          <h2>Tag lida</h2>
+          <span id="result-time" class="muted small"></span>
+        </div>
+
+        <h3>Número de série (UID)</h3>
+        <table class="uid" id="uid-table"><tbody></tbody></table>
+
+        <h3>Conteúdo <span id="record-count" class="muted small"></span></h3>
+        <div id="records"></div>
+
+        <div class="row wrap">
+          <button id="btn-clone" class="btn">Copiar para gravar em outra tag</button>
+          <button id="btn-copy-json" class="btn ghost">Copiar JSON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRAVAR -->
+    <section id="tab-gravar" class="tab" data-tab="gravar" hidden>
+      <div class="card">
+        <h2>O que gravar</h2>
+        <label class="field">
+          <span>Tipo</span>
+          <select id="w-type">
+            <option value="text">Texto</option>
+            <option value="url">Link (site)</option>
+            <option value="tel">Telefone</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">E-mail</option>
+            <option value="sms">SMS</option>
+            <option value="wifi">Rede Wi-Fi</option>
+            <option value="vcard">Contato (vCard)</option>
+            <option value="geo">Localização</option>
+            <option value="json">JSON</option>
+          </select>
+        </label>
+        <div id="w-fields"></div>
+        <div class="row wrap">
+          <button id="btn-add" class="btn">+ Adicionar à lista</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Registros a gravar</h2>
+          <button id="btn-clear-list" class="btn ghost small">Limpar</button>
+        </div>
+        <ol id="w-list" class="records-list"></ol>
+        <p id="w-empty" class="muted small">Nenhum registro na lista. Ao gravar, o formulário acima é usado.</p>
+        <p id="w-size" class="muted small"></p>
+        <label class="check"><input type="checkbox" id="opt-overwrite" checked> Sobrescrever conteúdo existente</label>
+        <div class="row">
+          <button id="btn-write" class="btn primary">Gravar na tag</button>
+          <button id="btn-write-cancel" class="btn" hidden>Cancelar</button>
+        </div>
+        <p id="write-status" class="status"></p>
+      </div>
+    </section>
+
+    <!-- FERRAMENTAS -->
+    <section id="tab-ferramentas" class="tab" data-tab="ferramentas" hidden>
+      <div class="card">
+        <h2>Apagar tag</h2>
+        <p class="muted">Grava uma mensagem vazia. A tag continua regravável.</p>
+        <button id="btn-erase" class="btn">Apagar tag</button>
+      </div>
+      <div class="card danger-zone">
+        <h2>Bloquear tag</h2>
+        <p class="muted"><b>Permanente.</b> Depois de bloqueada, a tag nunca mais pode ser gravada nem apagada.</p>
+        <button id="btn-lock" class="btn danger">Bloquear tag para sempre</button>
+      </div>
+      <div class="card">
+        <h2>Converter UID</h2>
+        <p class="muted">Cole um número de série (ex.: <code>A3:2B:CC:11</code>) para ver os formatos.</p>
+        <label class="field"><span>UID</span><input id="conv-input" inputmode="text" autocomplete="off" placeholder="A3:2B:CC:11"></label>
+        <table class="uid" id="conv-table"><tbody></tbody></table>
+      </div>
+      <p id="tools-status" class="status"></p>
+      <div class="row"><button id="btn-tools-cancel" class="btn" hidden>Cancelar</button></div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="tab-historico" class="tab" data-tab="historico" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>Histórico de leituras</h2>
+          <span id="hist-count" class="muted small"></span>
+        </div>
+        <div class="row wrap">
+          <button id="btn-export" class="btn">Exportar CSV</button>
+          <button id="btn-hist-clear" class="btn ghost">Apagar histórico</button>
+        </div>
+        <ul id="hist-list" class="hist"></ul>
+        <p id="hist-empty" class="muted">Nenhuma leitura ainda.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Seções">
+    <button data-go="ler" class="active"><span>📡</span>Ler</button>
+    <button data-go="gravar"><span>✍️</span>Gravar</button>
+    <button data-go="ferramentas"><span>🛠️</span>Ferramentas</button>
+    <button data-go="historico"><span>🕘</span>Histórico</button>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="nfc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
